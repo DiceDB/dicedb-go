@@ -1,5 +1,27 @@
 GO_MOD_DIRS := $(shell find . -type f -name 'go.mod' -exec dirname {} \; | sort)
 
+.EXPORT_ALL_VARIABLES:
+RE_CLUSTER = true
+REDIS_PORT = 7379
+
+
+dicedbtest: dicedbtestdeps
+	$(eval GO_VERSION := $(shell go version | cut -d " " -f 3 | cut -d. -f2))
+	set -e; for dir in $(GO_MOD_DIRS); do \
+	  if [ "$$(echo "$$dir" | grep -E './example|./example/otel|./extra/(rediscensus|redisotel|redisprometheus)')" ]; then \
+	  	echo "Skipping go test in $$dir"; \
+	  	continue; \
+	  fi; \
+	  echo "go test in $${dir}"; \
+	  (cd "$${dir}" && \
+	    go mod tidy -compat=1.22 && \
+	    go test -tags skiptest && \
+	    go test -tags skiptest ./... -short -race && \
+	    go test -tags skiptest ./... -run=NONE -bench=. -benchmem && \
+	    go test -tags skiptest -coverprofile=coverage.txt -covermode=atomic ./... && \
+	    go vet); \
+	done; \
+
 test: testdeps
 	$(eval GO_VERSION := $(shell go version | cut -d " " -f 3 | cut -d. -f2))
 	set -e; for dir in $(GO_MOD_DIRS); do \
@@ -19,6 +41,11 @@ test: testdeps
 	done
 	cd internal/customvet && go build .
 	go vet -vettool ./internal/customvet/customvet
+
+dicedbtestdeps: testdata/dicedb
+
+testdata/dicedb:
+	docker compose up -d
 
 testdeps: testdata/redis/src/redis-server
 

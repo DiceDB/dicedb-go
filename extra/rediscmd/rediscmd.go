@@ -10,13 +10,13 @@ import (
 	"github.com/dicedb/dicedb-go"
 )
 
-func CmdString(cmd redis.Cmder) string {
+func CmdString(cmd dicedb.Cmder) string {
 	b := make([]byte, 0, 32)
 	b = AppendCmd(b, cmd)
 	return String(b)
 }
 
-func CmdsString(cmds []redis.Cmder) (string, string) {
+func CmdsString(cmds []dicedb.Cmder) (string, string) {
 	const numCmdLimit = 100
 	const numNameLimit = 10
 
@@ -50,7 +50,7 @@ func CmdsString(cmds []redis.Cmder) (string, string) {
 	return summary, String(b)
 }
 
-func AppendCmd(b []byte, cmd redis.Cmder) []byte {
+func AppendCmd(b []byte, cmd dicedb.Cmder) []byte {
 	const numArgLimit = 32
 
 	for i, arg := range cmd.Args() {

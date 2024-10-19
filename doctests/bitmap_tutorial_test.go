@@ -15,7 +15,7 @@ func ExampleClient_ping() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})
@@ -60,7 +60,7 @@ func ExampleClient_bitcount() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})

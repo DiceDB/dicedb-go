@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 // EXAMPLE: cmds_sorted_set
 // HIDE_START
 package example_commands_test
@@ -15,7 +17,7 @@ func ExampleClient_zadd_cmd() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})
@@ -76,7 +78,7 @@ func ExampleClient_zrange1() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})
@@ -134,7 +136,7 @@ func ExampleClient_zrange2() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})
@@ -174,7 +176,7 @@ func ExampleClient_zrange3() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})

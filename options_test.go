@@ -1,4 +1,4 @@
-//go:build go1.7
+//go:build !skiptest
 
 package dicedb
 

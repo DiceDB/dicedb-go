@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 // EXAMPLE: cms_tutorial
 // HIDE_START
 package example_commands_test
@@ -15,7 +17,7 @@ func ExampleClient_cms() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})

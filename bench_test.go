@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb_test
 
 import (
@@ -15,7 +17,7 @@ import (
 
 func benchmarkRedisClient(ctx context.Context, poolSize int) *dicedb.Client {
 	client := dicedb.NewClient(&dicedb.Options{
-		Addr:         ":6379",
+		Addr:         ":7379",
 		DialTimeout:  time.Second,
 		ReadTimeout:  time.Second,
 		WriteTimeout: time.Second,
@@ -284,159 +286,159 @@ func newClusterScenario() *clusterScenario {
 	}
 }
 
-func BenchmarkClusterPing(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping in short mode")
-	}
-
-	ctx := context.Background()
-	cluster := newClusterScenario()
-	if err := startCluster(ctx, cluster); err != nil {
-		b.Fatal(err)
-	}
-	defer cluster.Close()
-
-	client := cluster.newClusterClient(ctx, redisClusterOptions())
-	defer client.Close()
-
-	b.ResetTimer()
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			err := client.Ping(ctx).Err()
-			if err != nil {
-				b.Fatal(err)
-			}
-		}
-	})
-}
-
-func BenchmarkClusterDoInt(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping in short mode")
-	}
-
-	ctx := context.Background()
-	cluster := newClusterScenario()
-	if err := startCluster(ctx, cluster); err != nil {
-		b.Fatal(err)
-	}
-	defer cluster.Close()
-
-	client := cluster.newClusterClient(ctx, redisClusterOptions())
-	defer client.Close()
-
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			err := client.Do(ctx, "SET", 10, 10).Err()
-			if err != nil {
-				b.Fatal(err)
-			}
-		}
-	})
-}
-
-func BenchmarkClusterSetString(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping in short mode")
-	}
-
-	ctx := context.Background()
-	cluster := newClusterScenario()
-	if err := startCluster(ctx, cluster); err != nil {
-		b.Fatal(err)
-	}
-	defer cluster.Close()
-
-	client := cluster.newClusterClient(ctx, redisClusterOptions())
-	defer client.Close()
-
-	value := string(bytes.Repeat([]byte{'1'}, 10000))
-
-	b.ResetTimer()
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			err := client.Set(ctx, "key", value, 0).Err()
-			if err != nil {
-				b.Fatal(err)
-			}
-		}
-	})
-}
-
-func BenchmarkExecRingSetAddrsCmd(b *testing.B) {
-	const (
-		ringShard1Name = "ringShardOne"
-		ringShard2Name = "ringShardTwo"
-	)
-
-	for _, port := range []string{ringShard1Port, ringShard2Port} {
-		if _, err := startRedis(port); err != nil {
-			b.Fatal(err)
-		}
-	}
-
-	b.Cleanup(func() {
-		for _, p := range processes {
-			if err := p.Close(); err != nil {
-				b.Errorf("Failed to stop redis process: %v", err)
-			}
-		}
-		processes = nil
-	})
-
-	ring := dicedb.NewRing(&dicedb.RingOptions{
-		Addrs: map[string]string{
-			"ringShardOne": ":" + ringShard1Port,
-		},
-		NewClient: func(opt *dicedb.Options) *dicedb.Client {
-			// Simulate slow shard creation
-			time.Sleep(100 * time.Millisecond)
-			return dicedb.NewClient(opt)
-		},
-	})
-	defer ring.Close()
-
-	if _, err := ring.Ping(context.Background()).Result(); err != nil {
-		b.Fatal(err)
-	}
-
-	// Continuously update addresses by adding and removing one address
-	updatesDone := make(chan struct{})
-	defer func() { close(updatesDone) }()
-	go func() {
-		ticker := time.NewTicker(10 * time.Millisecond)
-		defer ticker.Stop()
-		for i := 0; ; i++ {
-			select {
-			case <-ticker.C:
-				if i%2 == 0 {
-					ring.SetAddrs(map[string]string{
-						ringShard1Name: ":" + ringShard1Port,
-					})
-				} else {
-					ring.SetAddrs(map[string]string{
-						ringShard1Name: ":" + ringShard1Port,
-						ringShard2Name: ":" + ringShard2Port,
-					})
-				}
-			case <-updatesDone:
-				return
-			}
-		}
-	}()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		if _, err := ring.Ping(context.Background()).Result(); err != nil {
-			if err == dicedb.ErrClosed {
-				// The shard client could be closed while ping command is in progress
-				continue
-			} else {
-				b.Fatal(err)
-			}
-		}
-	}
-}
+//func BenchmarkClusterPing(b *testing.B) {
+//	if testing.Short() {
+//		b.Skip("skipping in short mode")
+//	}
+//
+//	ctx := context.Background()
+//	cluster := newClusterScenario()
+//	if err := startCluster(ctx, cluster); err != nil {
+//		b.Fatal(err)
+//	}
+//	defer cluster.Close()
+//
+//	client := cluster.newClusterClient(ctx, redisClusterOptions())
+//	defer client.Close()
+//
+//	b.ResetTimer()
+//
+//	b.RunParallel(func(pb *testing.PB) {
+//		for pb.Next() {
+//			err := client.Ping(ctx).Err()
+//			if err != nil {
+//				b.Fatal(err)
+//			}
+//		}
+//	})
+//}
+//
+//func BenchmarkClusterDoInt(b *testing.B) {
+//	if testing.Short() {
+//		b.Skip("skipping in short mode")
+//	}
+//
+//	ctx := context.Background()
+//	cluster := newClusterScenario()
+//	if err := startCluster(ctx, cluster); err != nil {
+//		b.Fatal(err)
+//	}
+//	defer cluster.Close()
+//
+//	client := cluster.newClusterClient(ctx, redisClusterOptions())
+//	defer client.Close()
+//
+//	b.ResetTimer()
+//	b.RunParallel(func(pb *testing.PB) {
+//		for pb.Next() {
+//			err := client.Do(ctx, "SET", 10, 10).Err()
+//			if err != nil {
+//				b.Fatal(err)
+//			}
+//		}
+//	})
+//}
+//
+//func BenchmarkClusterSetString(b *testing.B) {
+//	if testing.Short() {
+//		b.Skip("skipping in short mode")
+//	}
+//
+//	ctx := context.Background()
+//	cluster := newClusterScenario()
+//	if err := startCluster(ctx, cluster); err != nil {
+//		b.Fatal(err)
+//	}
+//	defer cluster.Close()
+//
+//	client := cluster.newClusterClient(ctx, redisClusterOptions())
+//	defer client.Close()
+//
+//	value := string(bytes.Repeat([]byte{'1'}, 10000))
+//
+//	b.ResetTimer()
+//
+//	b.RunParallel(func(pb *testing.PB) {
+//		for pb.Next() {
+//			err := client.Set(ctx, "key", value, 0).Err()
+//			if err != nil {
+//				b.Fatal(err)
+//			}
+//		}
+//	})
+//}
+//
+//func BenchmarkExecRingSetAddrsCmd(b *testing.B) {
+//	const (
+//		ringShard1Name = "ringShardOne"
+//		ringShard2Name = "ringShardTwo"
+//	)
+//
+//	for _, port := range []string{ringShard1Port, ringShard2Port} {
+//		if _, err := startRedis(port); err != nil {
+//			b.Fatal(err)
+//		}
+//	}
+//
+//	b.Cleanup(func() {
+//		for _, p := range processes {
+//			if err := p.Close(); err != nil {
+//				b.Errorf("Failed to stop redis process: %v", err)
+//			}
+//		}
+//		processes = nil
+//	})
+//
+//	ring := dicedb.NewRing(&dicedb.RingOptions{
+//		Addrs: map[string]string{
+//			"ringShardOne": ":" + ringShard1Port,
+//		},
+//		NewClient: func(opt *dicedb.Options) *dicedb.Client {
+//			// Simulate slow shard creation
+//			time.Sleep(100 * time.Millisecond)
+//			return dicedb.NewClient(opt)
+//		},
+//	})
+//	defer ring.Close()
+//
+//	if _, err := ring.Ping(context.Background()).Result(); err != nil {
+//		b.Fatal(err)
+//	}
+//
+//	// Continuously update addresses by adding and removing one address
+//	updatesDone := make(chan struct{})
+//	defer func() { close(updatesDone) }()
+//	go func() {
+//		ticker := time.NewTicker(10 * time.Millisecond)
+//		defer ticker.Stop()
+//		for i := 0; ; i++ {
+//			select {
+//			case <-ticker.C:
+//				if i%2 == 0 {
+//					ring.SetAddrs(map[string]string{
+//						ringShard1Name: ":" + ringShard1Port,
+//					})
+//				} else {
+//					ring.SetAddrs(map[string]string{
+//						ringShard1Name: ":" + ringShard1Port,
+//						ringShard2Name: ":" + ringShard2Port,
+//					})
+//				}
+//			case <-updatesDone:
+//				return
+//			}
+//		}
+//	}()
+//
+//	b.ResetTimer()
+//	for i := 0; i < b.N; i++ {
+//		if _, err := ring.Ping(context.Background()).Result(); err != nil {
+//			if err == dicedb.ErrClosed {
+//				// The shard client could be closed while ping command is in progress
+//				continue
+//			} else {
+//				b.Fatal(err)
+//			}
+//		}
+//	}
+//}

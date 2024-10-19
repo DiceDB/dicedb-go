@@ -18,6 +18,11 @@ import (
 )
 
 const (
+	dicedbPort = "7379"
+	dicedbAddr = ":" + dicedbPort
+)
+
+const (
 	redisSecondaryPort = "6381"
 )
 
@@ -82,7 +87,7 @@ var _ = BeforeSuite(func() {
 	}
 	var err error
 	RECluster, _ = strconv.ParseBool(os.Getenv("RE_CLUSTER"))
-
+	fmt.Println("RE_CLUSTER: ", RECluster)
 	if !RECluster {
 
 		redisMain, err = startRedis(redisPort)
@@ -145,7 +150,7 @@ func TestGinkgoSuite(t *testing.T) {
 func redisOptions() *dicedb.Options {
 	if RECluster {
 		return &dicedb.Options{
-			Addr: redisAddr,
+			Addr: dicedbAddr,
 			DB:   0,
 
 			DialTimeout:           10 * time.Second,
@@ -161,7 +166,7 @@ func redisOptions() *dicedb.Options {
 		}
 	}
 	return &dicedb.Options{
-		Addr: redisAddr,
+		Addr: dicedbAddr,
 		DB:   15,
 
 		DialTimeout:           10 * time.Second,

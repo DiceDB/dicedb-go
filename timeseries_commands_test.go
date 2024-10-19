@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb_test
 
 import (
@@ -64,7 +66,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 			Expect(strings.ToUpper(resultInfo["duplicatePolicy"].(string))).To(BeEquivalentTo(dup))
 		}
 		// Test insertion filters
-		opt = &redis.TSOptions{IgnoreMaxTimeDiff: 5, DuplicatePolicy: "LAST", IgnoreMaxValDiff: 10.0}
+		opt = &dicedb.TSOptions{IgnoreMaxTimeDiff: 5, DuplicatePolicy: "LAST", IgnoreMaxValDiff: 10.0}
 		result, err = client.TSCreateWithArgs(ctx, "ts-if-1", opt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result).To(BeEquivalentTo("OK"))
@@ -87,13 +89,13 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		rangePoints, err := client.TSRange(ctx, "ts-if-1", 1000, 1021).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(4))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{
 			{Timestamp: 1000, Value: 1.0},
 			{Timestamp: 1010, Value: 11.0},
 			{Timestamp: 1020, Value: 11.5},
 			{Timestamp: 1021, Value: 22.0}}))
 		// Test insertion filters with other duplicate policy
-		opt = &redis.TSOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0}
+		opt = &dicedb.TSOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0}
 		result, err = client.TSCreateWithArgs(ctx, "ts-if-2", opt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result).To(BeEquivalentTo("OK"))
@@ -110,7 +112,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		rangePoints, err = client.TSRange(ctx, "ts-if-1", 1000, 1013).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(3))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{
 			{Timestamp: 1000, Value: 1.0},
 			{Timestamp: 1010, Value: 11.0},
 			{Timestamp: 1013, Value: 10.0}}))
@@ -189,7 +191,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resultGet.Value).To(BeEquivalentTo(5))
 		// Insertion filters
-		opt = &redis.TSOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
+		opt = &dicedb.TSOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
 		result, err = client.TSAddWithArgs(ctx, "ts-if-1", 1000, 1.0, opt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result).To(BeEquivalentTo(1000))
@@ -201,7 +203,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		rangePoints, err := client.TSRange(ctx, "ts-if-1", 1000, 1004).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(1))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{{Timestamp: 1000, Value: 1.0}}))
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{{Timestamp: 1000, Value: 1.0}}))
 	})
 
 	It("should TSAlter", Label("timeseries", "tsalter", "NonRedisEnterprise"), func() {
@@ -254,7 +256,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resultAdd).To(BeEquivalentTo(1013))
 
-		alterOpt := &redis.TSAlterOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
+		alterOpt := &dicedb.TSAlterOptions{IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
 		resultAlter, err = client.TSAlter(ctx, "ts-if-1", alterOpt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resultAlter).To(BeEquivalentTo("OK"))
@@ -266,7 +268,7 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		rangePoints, err := client.TSRange(ctx, "ts-if-1", 1000, 1013).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(3))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{
 			{Timestamp: 1000, Value: 1.0},
 			{Timestamp: 1010, Value: 11.0},
 			{Timestamp: 1013, Value: 10.0}}))
@@ -370,52 +372,52 @@ var _ = Describe("RedisTimeseries commands", Label("timeseries"), func() {
 		Expect(resultInfo["chunkSize"]).To(BeEquivalentTo(128))
 
 		// Test insertion filters INCRBY
-		opt = &redis.TSIncrDecrOptions{Timestamp: 1000, IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
+		opt = &dicedb.TSIncrDecrOptions{Timestamp: 1000, IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
 		res, err := client.TSIncrByWithArgs(ctx, "ts-if-1", 1.0, opt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
-		res, err = client.TSIncrByWithArgs(ctx, "ts-if-1", 3.0, &redis.TSIncrDecrOptions{Timestamp: 1000}).Result()
+		res, err = client.TSIncrByWithArgs(ctx, "ts-if-1", 3.0, &dicedb.TSIncrDecrOptions{Timestamp: 1000}).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
 		rangePoints, err := client.TSRange(ctx, "ts-if-1", 1000, 1004).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(1))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{{Timestamp: 1000, Value: 1.0}}))
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{{Timestamp: 1000, Value: 1.0}}))
 
-		res, err = client.TSIncrByWithArgs(ctx, "ts-if-1", 10.1, &redis.TSIncrDecrOptions{Timestamp: 1000}).Result()
+		res, err = client.TSIncrByWithArgs(ctx, "ts-if-1", 10.1, &dicedb.TSIncrDecrOptions{Timestamp: 1000}).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
 		rangePoints, err = client.TSRange(ctx, "ts-if-1", 1000, 1004).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(1))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{{Timestamp: 1000, Value: 11.1}}))
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{{Timestamp: 1000, Value: 11.1}}))
 
 		// Test insertion filters DECRBY
-		opt = &redis.TSIncrDecrOptions{Timestamp: 1000, IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
+		opt = &dicedb.TSIncrDecrOptions{Timestamp: 1000, IgnoreMaxTimeDiff: 5, IgnoreMaxValDiff: 10.0, DuplicatePolicy: "LAST"}
 		res, err = client.TSDecrByWithArgs(ctx, "ts-if-2", 1.0, opt).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
-		res, err = client.TSDecrByWithArgs(ctx, "ts-if-2", 3.0, &redis.TSIncrDecrOptions{Timestamp: 1000}).Result()
+		res, err = client.TSDecrByWithArgs(ctx, "ts-if-2", 3.0, &dicedb.TSIncrDecrOptions{Timestamp: 1000}).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
 		rangePoints, err = client.TSRange(ctx, "ts-if-2", 1000, 1004).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(1))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{{Timestamp: 1000, Value: -1.0}}))
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{{Timestamp: 1000, Value: -1.0}}))
 
-		res, err = client.TSDecrByWithArgs(ctx, "ts-if-2", 10.1, &redis.TSIncrDecrOptions{Timestamp: 1000}).Result()
+		res, err = client.TSDecrByWithArgs(ctx, "ts-if-2", 10.1, &dicedb.TSIncrDecrOptions{Timestamp: 1000}).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEquivalentTo(1000))
 
 		rangePoints, err = client.TSRange(ctx, "ts-if-2", 1000, 1004).Result()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(rangePoints)).To(BeEquivalentTo(1))
-		Expect(rangePoints).To(BeEquivalentTo([]redis.TSTimestampValue{{Timestamp: 1000, Value: -11.1}}))
+		Expect(rangePoints).To(BeEquivalentTo([]dicedb.TSTimestampValue{{Timestamp: 1000, Value: -11.1}}))
 	})
 
 	It("should TSGet", Label("timeseries", "tsget"), func() {

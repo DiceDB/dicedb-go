@@ -13,7 +13,7 @@ func ExampleClient_Set_and_get() {
 	ctx := context.Background()
 
 	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})

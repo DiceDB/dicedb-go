@@ -1,0 +1,5 @@
+services:
+  dicedb:
+    image: dicedb/dicedb:latest
+    ports:
+      - "7379:7379"

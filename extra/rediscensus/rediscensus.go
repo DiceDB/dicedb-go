@@ -1,7 +1,10 @@
+//go:build !skiptest
+
 package rediscensus
 
 import (
 	"context"
+	"github.com/redis/go-redis/v9"
 	"net"
 
 	"go.opencensus.io/trace"
@@ -12,13 +15,13 @@ import (
 
 type TracingHook struct{}
 
-var _ redis.Hook = (*TracingHook)(nil)
+var _ dicedb.Hook = (*TracingHook)(nil)
 
 func NewTracingHook() *TracingHook {
 	return new(TracingHook)
 }
 
-func (TracingHook) DialHook(next redis.DialHook) redis.DialHook {
+func (TracingHook) DialHook(next dicedb.DialHook) dicedb.DialHook {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		ctx, span := trace.StartSpan(ctx, "dial")
 		defer span.End()
@@ -40,7 +43,7 @@ func (TracingHook) DialHook(next redis.DialHook) redis.DialHook {
 	}
 }
 
-func (TracingHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+func (TracingHook) ProcessHook(next dicedb.ProcessHook) dicedb.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		ctx, span := trace.StartSpan(ctx, cmd.FullName())
 		defer span.End()

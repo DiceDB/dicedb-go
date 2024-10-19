@@ -1,8 +1,6 @@
 module github.com/redis/go-redis/example/otel
 
-go 1.23
-
-toolchain go1.23.0
+go 1.23.0
 
 replace github.com/dicedb/dicedb-go => ../..
 
@@ -13,6 +11,7 @@ replace github.com/redis/go-redis/extra/rediscmd/v9 => ../../extra/rediscmd
 require (
 	github.com/dicedb/dicedb-go v0.0.0-20241011194507-ad62a2dfc08e
 	github.com/redis/go-redis/extra/redisotel/v9 v9.5.3
+	github.com/redis/go-redis/v9 v9.6.2
 	github.com/uptrace/uptrace-go v1.21.0
 	go.opentelemetry.io/otel v1.22.0
 )

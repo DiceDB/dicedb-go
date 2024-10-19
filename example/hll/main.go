@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dicedb/dicedb-go"
+	dicedb "github.com/dicedb/dicedb-go"
 )
 
 func main() {
 	ctx := context.Background()
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+	rdb := dicedb.NewClient(&dicedb.Options{
+		Addr: ":7379",
 	})
 	_ = rdb.FlushDB(ctx).Err()
 

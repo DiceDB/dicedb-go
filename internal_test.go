@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb
 
 import (

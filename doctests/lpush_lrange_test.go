@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 // EXAMPLE: lpush_and_lrange
 // HIDE_START
 package example_commands_test
@@ -13,7 +15,7 @@ func ExampleClient_LPush_and_lrange() {
 	ctx := context.Background()
 
 	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr:     "localhost:6379",
+		Addr:     "localhost:7379",
 		Password: "", // no password docs
 		DB:       0,  // use default DB
 	})

@@ -3,19 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
-
-	"github.com/dicedb/dicedb-go"
 )
 
 func main() {
 	ctx := context.Background()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+		Addr: ":7379",
 	})
 
 	_ = rdb.Set(ctx, "key_with_ttl", "bar", time.Minute).Err()

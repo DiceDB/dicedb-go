@@ -1,8 +1,12 @@
+//go:build !skiptest
+
 package main
 
 import (
 	"context"
 	"fmt"
+	"github.com/dicedb/dicedb-go"
+	_ "github.com/redis/go-redis/v9"
 	"log"
 	"sync"
 	"time"
@@ -11,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/dicedb/dicedb-go"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 )
 
@@ -29,8 +32,8 @@ func main() {
 	)
 	defer uptrace.Shutdown(ctx)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+	rdb := dicedb.NewClient(&dicedb.Options{
+		Addr: ":7379",
 	})
 	if err := redisotel.InstrumentTracing(rdb); err != nil {
 		panic(err)
@@ -57,7 +60,7 @@ func main() {
 	}
 }
 
-func handleRequest(ctx context.Context, rdb *redis.Client) error {
+func handleRequest(ctx context.Context, rdb *dicedb.Client) error {
 	if err := rdb.Set(ctx, "First value", "value_1", 0).Err(); err != nil {
 		return err
 	}

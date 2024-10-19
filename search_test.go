@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb_test
 
 import (
@@ -29,7 +31,7 @@ var _ = Describe("RediSearch commands Resp 2", Label("search"), func() {
 	var client *dicedb.Client
 
 	BeforeEach(func() {
-		client = dicedb.NewClient(&dicedb.Options{Addr: ":6379", Protocol: 2})
+		client = dicedb.NewClient(&dicedb.Options{Addr: ":7379", Protocol: 2})
 		Expect(client.FlushDB(ctx).Err()).NotTo(HaveOccurred())
 	})
 
@@ -1424,8 +1426,8 @@ var _ = Describe("RediSearch commands Resp 3", Label("search"), func() {
 	var client2 *dicedb.Client
 
 	BeforeEach(func() {
-		client = dicedb.NewClient(&dicedb.Options{Addr: ":6379", Protocol: 3, UnstableResp3: true})
-		client2 = dicedb.NewClient(&dicedb.Options{Addr: ":6379", Protocol: 3})
+		client = dicedb.NewClient(&dicedb.Options{Addr: ":7379", Protocol: 3, UnstableResp3: true})
+		client2 = dicedb.NewClient(&dicedb.Options{Addr: ":7379", Protocol: 3})
 		Expect(client.FlushDB(ctx).Err()).NotTo(HaveOccurred())
 	})
 

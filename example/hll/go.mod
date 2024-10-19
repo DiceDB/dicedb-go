@@ -1,8 +1,6 @@
 module github.com/redis/go-redis/example/hll
 
-go 1.23
-
-toolchain go1.23.0
+go 1.23.0
 
 replace github.com/dicedb/dicedb-go => ../..
 

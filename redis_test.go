@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb_test
 
 import (
@@ -35,7 +37,7 @@ func (redisHookError) ProcessPipelineHook(hook dicedb.ProcessPipelineHook) diced
 
 func TestHookError(t *testing.T) {
 	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr: ":6379",
+		Addr: ":7379",
 	})
 	rdb.AddHook(redisHookError{})
 

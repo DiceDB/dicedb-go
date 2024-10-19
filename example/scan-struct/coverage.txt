@@ -1,0 +1,9 @@
+mode: atomic
+github.com/redis/go-redis/example/scan-struct/main.go:18.13,27.67 4 0
+github.com/redis/go-redis/example/scan-struct/main.go:27.67,34.3 6 0
+github.com/redis/go-redis/example/scan-struct/main.go:34.17,35.13 1 0
+github.com/redis/go-redis/example/scan-struct/main.go:38.2,41.62 2 0
+github.com/redis/go-redis/example/scan-struct/main.go:41.62,42.13 1 0
+github.com/redis/go-redis/example/scan-struct/main.go:46.2,46.75 1 0
+github.com/redis/go-redis/example/scan-struct/main.go:46.75,47.13 1 0
+github.com/redis/go-redis/example/scan-struct/main.go:50.2,64.19 2 0

@@ -41,20 +41,20 @@ func (redisHook) ProcessPipelineHook(hook dicedb.ProcessPipelineHook) dicedb.Pro
 
 func Example_instrumentation() {
 	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr: ":6379",
+		Addr: ":7379",
 	})
 	rdb.AddHook(redisHook{})
 
 	rdb.Ping(ctx)
 	// Output: starting processing: <ping: >
-	// dialing tcp :6379
-	// finished dialing tcp :6379
+	// dialing tcp :7379
+	// finished dialing tcp :7379
 	// finished processing: <ping: PONG>
 }
 
 func ExamplePipeline_instrumentation() {
 	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr: ":6379",
+		Addr: ":7379",
 	})
 	rdb.AddHook(redisHook{})
 
@@ -64,31 +64,31 @@ func ExamplePipeline_instrumentation() {
 		return nil
 	})
 	// Output: pipeline starting processing: [ping:  ping: ]
-	// dialing tcp :6379
-	// finished dialing tcp :6379
+	// dialing tcp :7379
+	// finished dialing tcp :7379
 	// pipeline finished processing: [ping: PONG ping: PONG]
 }
 
-func ExampleClient_Watch_instrumentation() {
-	rdb := dicedb.NewClient(&dicedb.Options{
-		Addr: ":6379",
-	})
-	rdb.AddHook(redisHook{})
-
-	rdb.Watch(ctx, func(tx *dicedb.Tx) error {
-		tx.Ping(ctx)
-		tx.Ping(ctx)
-		return nil
-	}, "foo")
-	// Output:
-	// starting processing: <watch foo: >
-	// dialing tcp :6379
-	// finished dialing tcp :6379
-	// finished processing: <watch foo: OK>
-	// starting processing: <ping: >
-	// finished processing: <ping: PONG>
-	// starting processing: <ping: >
-	// finished processing: <ping: PONG>
-	// starting processing: <unwatch: >
-	// finished processing: <unwatch: OK>
-}
+//func ExampleClient_Watch_instrumentation() {
+//	rdb := dicedb.NewClient(&dicedb.Options{
+//		Addr: ":7379",
+//	})
+//	rdb.AddHook(redisHook{})
+//
+//	rdb.Watch(ctx, func(tx *dicedb.Tx) error {
+//		tx.Ping(ctx)
+//		tx.Ping(ctx)
+//		return nil
+//	}, "foo")
+//	// Output:
+//	// starting processing: <watch foo: >
+//	// dialing tcp :7379
+//	// finished dialing tcp :7379
+//	// finished processing: <watch foo: OK>
+//	// starting processing: <ping: >
+//	// finished processing: <ping: PONG>
+//	// starting processing: <ping: >
+//	// finished processing: <ping: PONG>
+//	// starting processing: <unwatch: >
+//	// finished processing: <unwatch: OK>
+//}

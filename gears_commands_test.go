@@ -1,3 +1,5 @@
+//go:build !skiptest
+
 package dicedb_test
 
 import (
@@ -39,7 +41,7 @@ var _ = Describe("RedisGears commands", Label("gears"), func() {
 	var client *dicedb.Client
 
 	BeforeEach(func() {
-		client = dicedb.NewClient(&dicedb.Options{Addr: ":6379"})
+		client = dicedb.NewClient(&dicedb.Options{Addr: ":7379"})
 		Expect(client.FlushDB(ctx).Err()).NotTo(HaveOccurred())
 		client.TFunctionDelete(ctx, "lib1")
 	})

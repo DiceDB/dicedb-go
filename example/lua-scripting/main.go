@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-
-	"github.com/dicedb/dicedb-go"
+	dicedb "github.com/dicedb/dicedb-go"
 )
 
 func main() {
 	ctx := context.Background()
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+	rdb := dicedb.NewClient(&dicedb.Options{
+		Addr: ":7379",
 	})
 	_ = rdb.FlushDB(ctx).Err()
 
@@ -32,25 +31,25 @@ func main() {
 	fmt.Printf("sum is: %d\n", sum)
 }
 
-var incrBy = redis.NewScript(`
+var incrBy = dicedb.NewScript(`
 local key = KEYS[1]
 local change = ARGV[1]
 
-local value = redis.call("GET", key)
+local value = dicedb.call("GET", key)
 if not value then
   value = 0
 end
 
 value = value + change
-redis.call("SET", key, value)
+dicedb.call("SET", key, value)
 
 return value
 `)
 
-var sum = redis.NewScript(`
+var sum = dicedb.NewScript(`
 local key = KEYS[1]
 
-local sum = redis.call("GET", key)
+local sum = dicedb.call("GET", key)
 if not sum then
   sum = 0
 end
@@ -60,7 +59,7 @@ for i = 1, num_arg do
   sum = sum + ARGV[i]
 end
 
-redis.call("SET", key, sum)
+dicedb.call("SET", key, sum)
 
 return sum
 `)

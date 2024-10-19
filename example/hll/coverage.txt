@@ -1,0 +1,7 @@
+mode: atomic
+github.com/redis/go-redis/example/hll/main.go:10.13,18.26 4 0
+github.com/redis/go-redis/example/hll/main.go:18.26,19.70 1 0
+github.com/redis/go-redis/example/hll/main.go:19.70,20.14 1 0
+github.com/redis/go-redis/example/hll/main.go:24.2,25.16 2 0
+github.com/redis/go-redis/example/hll/main.go:25.16,26.13 1 0
+github.com/redis/go-redis/example/hll/main.go:29.2,29.38 1 0
