@@ -5,11 +5,16 @@ import (
 	"net"
 	"strings"
 	"time"
+	"sync"
+	"io"
+	"syscall"
 
 	"github.com/dicedb/dicedb-go/ironhawk"
 	"github.com/dicedb/dicedb-go/wire"
 	"github.com/google/uuid"
 )
+
+var mu sync.Mutex
 
 type Client struct {
 	id        string
@@ -24,7 +29,7 @@ type option func(*Client)
 
 func newConn(host string, port int) (net.Conn, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+	conn, err := net.DialTimeout("tcp", addr, 500*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +85,36 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
-	return c.fire(cmd, c.conn)
+	result := c.fire(cmd, c.conn)
+	if result.Err != "" {
+		if c.CheckAndReconnect(result.Err) {
+			return c.Fire(cmd)
+		}
+	}
+	return result
+}
+
+func (c *Client) CheckAndReconnect(err string) bool {
+	fmt.Println(err)
+	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
+		fmt.Println("Error in connection. Reconnecting...")
+		
+		mu.Lock()
+		defer mu.Unlock()
+		
+		cnew, err := NewClient(c.host, c.port)
+		if err != nil {
+			fmt.Println("Failed to reconnect:", err)
+			return false
+		}
+		if c.conn != nil {
+			c.conn.Close()
+		}
+		
+		*c = *cnew
+		return true
+	}
+	return false
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
@@ -129,7 +163,9 @@ func (c *Client) watch() {
 		if err != nil {
 			// TODO: handle this better
 			// send the error to the user. maybe through context?
-			panic(err)
+			if ! c.CheckAndReconnect(err.Error()) {
+				panic(err)
+			}
 		}
 
 		c.watchCh <- resp
