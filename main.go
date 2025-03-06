@@ -2,12 +2,12 @@ package dicedb
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"strings"
-	"time"
 	"sync"
-	"io"
 	"syscall"
+	"time"
 
 	"github.com/dicedb/dicedb-go/ironhawk"
 	"github.com/dicedb/dicedb-go/wire"
@@ -29,7 +29,7 @@ type option func(*Client)
 
 func newConn(host string, port int) (net.Conn, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := net.DialTimeout("tcp", addr, 500*time.Second)
+	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -98,23 +98,37 @@ func (c *Client) CheckAndReconnect(err string) bool {
 	fmt.Println(err)
 	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
 		fmt.Println("Error in connection. Reconnecting...")
-		
-		mu.Lock()
-		defer mu.Unlock()
-		
-		cnew, err := NewClient(c.host, c.port)
+
+		newClient, err := GetOrCreateClient(c)
 		if err != nil {
 			fmt.Println("Failed to reconnect:", err)
 			return false
 		}
-		if c.conn != nil {
-			c.conn.Close()
-		}
-		
-		*c = *cnew
+
+		*c = *newClient
 		return true
 	}
 	return false
+}
+
+func GetOrCreateClient(c *Client) (*Client, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if c == nil {
+		return NewClient(c.host, c.port)
+	}
+
+	newClient, err := NewClient(c.host, c.port)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.conn != nil {
+		c.conn.Close()
+	}
+
+	return newClient, nil
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
