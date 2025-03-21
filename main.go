@@ -1,9 +1,11 @@
 package dicedb
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dicedb/dicedb-go/ironhawk"
@@ -12,8 +14,15 @@ import (
 )
 
 type Client struct {
-	id        string
-	conn      net.Conn
+	id     string
+	cancel context.CancelFunc
+
+	connWriteMu sync.Mutex
+	conn        net.Conn
+
+	pendingMu sync.Mutex
+	pending   map[uuid.UUID]chan *wire.Response
+
 	watchConn net.Conn
 	watchCh   chan *wire.Response
 	host      string
@@ -43,7 +52,9 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 		return nil, err
 	}
 
-	client := &Client{conn: conn, host: host, port: port}
+	pending := make(map[uuid.UUID]chan *wire.Response)
+
+	client := &Client{conn: conn, host: host, port: port, pending: pending}
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -51,7 +62,10 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 	if client.id == "" {
 		client.id = uuid.New().String()
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	client.cancel = cancel
 
+	go client.readLoop(ctx)
 	if resp := client.Fire(&wire.Command{
 		Cmd:  "HANDSHAKE",
 		Args: []string{client.id, "command"},
@@ -62,21 +76,64 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
-	if err := ironhawk.Write(co, cmd); err != nil {
-		return &wire.Response{
-			Err: err.Error(),
+func (c *Client) readLoop(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			c.conn.Close()
+			return
+		default:
+			resp, err := ironhawk.Read(c.conn)
+			if err != nil {
+				panic(err)
+			}
+
+			id := uuid.MustParse(resp.GetCorrId())
+
+			c.pendingMu.Lock()
+			ch, exists := c.pending[id]
+			if exists {
+				delete(c.pending, id)
+				c.pendingMu.Unlock()
+				ch <- resp
+			} else {
+				c.pendingMu.Unlock()
+				panic("no id response received")
+			}
 		}
 	}
+}
 
-	resp, err := ironhawk.Read(co)
+func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
+	id := uuid.New()
+	cmd.CorrId = id.String()
+
+	ch := make(chan *wire.Response)
+
+	c.pendingMu.Lock()
+	c.pending[id] = ch
+	c.pendingMu.Unlock()
+
+	c.connWriteMu.Lock()
+	err := ironhawk.Write(co, cmd)
+	c.connWriteMu.Unlock()
+
 	if err != nil {
 		return &wire.Response{
-			Err: err.Error(),
+			Err:    err.Error(),
+			CorrId: cmd.GetCorrId(),
 		}
 	}
 
-	return resp
+	select {
+	case r := <-ch:
+		return r
+	case <-time.After(time.Second * 10):
+		return &wire.Response{
+			Err:    "timeout",
+			CorrId: cmd.GetCorrId(),
+		}
+	}
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
@@ -137,5 +194,5 @@ func (c *Client) watch() {
 }
 
 func (c *Client) Close() {
-	c.conn.Close()
+	c.cancel()
 }

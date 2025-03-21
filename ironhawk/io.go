@@ -1,63 +1,60 @@
 package ironhawk
 
 import (
-	"bufio"
+	"encoding/binary"
 	"fmt"
-	"io"
-	"net"
-	"time"
-
 	"github.com/dicedb/dicedb-go/wire"
 	"google.golang.org/protobuf/proto"
+	"io"
+	"net"
 )
 
 const (
-	maxRequestSize = 32 * 1024 * 1024 // 32 MB
-	ioBufferSize   = 16 * 1024        // 16 KB
-	idleTimeout    = 30 * time.Minute
+	maxMessageSize = 32 * 1024 * 1024 // 32 MB
+	headerSize     = 4
 )
 
 func Read(conn net.Conn) (*wire.Response, error) {
-	var result []byte
-	reader := bufio.NewReaderSize(conn, ioBufferSize)
-	buf := make([]byte, ioBufferSize)
-
-	for {
-		n, err := reader.Read(buf)
-		if n > 0 {
-			if len(result)+n > maxRequestSize {
-				return nil, fmt.Errorf("request too large")
-			}
-			result = append(result, buf[:n]...)
-		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-
-		if n < len(buf) {
-			break
-		}
+	headerBuffer := make([]byte, headerSize)
+	if _, err := io.ReadFull(conn, headerBuffer); err != nil {
+		return nil, fmt.Errorf("failed to read message header: %w", err)
 	}
 
-	if len(result) == 0 {
-		return nil, io.EOF
+	messageSize := binary.BigEndian.Uint32(headerBuffer)
+	if messageSize == 0 {
+		return nil, fmt.Errorf("invalid message size: 0 bytes")
+	}
+	if messageSize > uint32(maxMessageSize) {
+		return nil, fmt.Errorf("message too large: %d bytes (max: %d)", messageSize, maxMessageSize)
 	}
 
-	r := &wire.Response{}
-	if err := proto.Unmarshal(result, r); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal command: %w", err)
+	messageBuffer := make([]byte, messageSize)
+	if _, err := io.ReadFull(conn, messageBuffer); err != nil {
+		return nil, fmt.Errorf("failed to read message into buffer: %w", err)
 	}
-	return r, nil
+
+	response := &wire.Response{}
+	if err := proto.Unmarshal(messageBuffer, response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return response, nil
 }
 
-func Write(conn net.Conn, c *wire.Command) error {
-	data, err := proto.Marshal(c)
+func Write(conn net.Conn, cmd *wire.Command) error {
+	message, err := proto.Marshal(cmd)
 	if err != nil {
 		return err
 	}
-	_, err = conn.Write(data)
-	return err
+
+	messageSize := len(message)
+	messageBuffer := make([]byte, headerSize+messageSize)
+	binary.BigEndian.PutUint32(messageBuffer[:headerSize], uint32(messageSize))
+	copy(messageBuffer[headerSize:], message)
+
+	if _, err := conn.Write(messageBuffer); err != nil {
+		return err
+	}
+
+	return nil
 }
