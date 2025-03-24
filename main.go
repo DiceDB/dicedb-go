@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dicedb/dicedb-go/ironhawk"
@@ -18,6 +19,7 @@ type Client struct {
 	watchCh   chan *wire.Response
 	host      string
 	port      int
+	mutex     sync.Mutex
 }
 
 type option func(*Client)
@@ -80,7 +82,11 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
-	return c.fire(cmd, c.conn)
+	c.mutex.Lock()
+	resp := c.fire(cmd, c.conn)
+	c.mutex.Unlock()
+
+	return resp
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
