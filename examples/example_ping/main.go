@@ -15,4 +15,15 @@ func main() {
 
 	resp := client.Fire(&wire.Command{Cmd: "PING"})
 	fmt.Println(resp)
+
+	resp = client.Fire(&wire.Command{Cmd: "SET", Args: []string{"foo", "bar"}})
+	fmt.Println(resp)
+
+	resp = client.Fire(&wire.Command{Cmd: "GET", Args: []string{"foo"}})
+	fmt.Println(resp)
+
+	resp = client.Fire(&wire.Command{Cmd: "GET", Args: []string{"foo1"}})
+	fmt.Println(resp)
+
+	client.Close()
 }
