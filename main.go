@@ -3,15 +3,19 @@ package dicedb
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/dicedb/dicedb-go/ironhawk"
 	"github.com/dicedb/dicedb-go/wire"
 	"github.com/google/uuid"
 )
+
+var mu sync.Mutex
 
 type Client struct {
 	id     string
@@ -137,7 +141,50 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
-	return c.fire(cmd, c.conn)
+	result := c.fire(cmd, c.conn)
+	if result.Err != "" {
+		if c.CheckAndReconnect(result.Err) {
+			return c.Fire(cmd)
+		}
+	}
+	return result
+}
+
+func (c *Client) CheckAndReconnect(err string) bool {
+	fmt.Println(err)
+	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
+		fmt.Println("Error in connection. Reconnecting...")
+
+		newClient, err := GetOrCreateClient(c)
+		if err != nil {
+			fmt.Println("Failed to reconnect:", err)
+			return false
+		}
+
+		*c = *newClient
+		return true
+	}
+	return false
+}
+
+func GetOrCreateClient(c *Client) (*Client, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if c == nil {
+		return NewClient(c.host, c.port)
+	}
+
+	newClient, err := NewClient(c.host, c.port)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.conn != nil {
+		c.conn.Close()
+	}
+
+	return newClient, nil
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
@@ -186,7 +233,9 @@ func (c *Client) watch() {
 		if err != nil {
 			// TODO: handle this better
 			// send the error to the user. maybe through context?
-			panic(err)
+			if ! c.CheckAndReconnect(err.Error()) {
+				panic(err)
+			}
 		}
 
 		c.watchCh <- resp
