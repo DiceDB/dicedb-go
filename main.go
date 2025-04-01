@@ -87,31 +87,29 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
 	result := c.fire(cmd, c.conn)
 	if result.Err != "" {
-		if c.CheckAndReconnect(result.Err) {
+		if c.checkAndReconnect(result.Err) {
 			return c.Fire(cmd)
 		}
 	}
 	return result
 }
 
-func (c *Client) CheckAndReconnect(err string) bool {
-	fmt.Println(err)
+func (c *Client) checkAndReconnect(err string) bool {
+	fmt.Println("error connecting:", err)
 	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
-		fmt.Println("Error in connection. Reconnecting...")
-
-		newClient, err := GetOrCreateClient(c)
+		fmt.Println("reconnecting ...")
+		nc, err := getOrCreateClient(c)
 		if err != nil {
-			fmt.Println("Failed to reconnect:", err)
+			fmt.Println("failed to reconnect. error:", err)
 			return false
 		}
-
-		*c = *newClient
+		*c = *nc
 		return true
 	}
 	return false
 }
 
-func GetOrCreateClient(c *Client) (*Client, error) {
+func getOrCreateClient(c *Client) (*Client, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -177,7 +175,7 @@ func (c *Client) watch() {
 		if err != nil {
 			// TODO: handle this better
 			// send the error to the user. maybe through context?
-			if !c.CheckAndReconnect(err.Error()) {
+			if !c.checkAndReconnect(err.Error()) {
 				panic(err)
 			}
 		}
