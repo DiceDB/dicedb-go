@@ -177,7 +177,7 @@ func (c *Client) watch() {
 		if err != nil {
 			// TODO: handle this better
 			// send the error to the user. maybe through context?
-			if ! c.CheckAndReconnect(err.Error()) {
+			if !c.CheckAndReconnect(err.Error()) {
 				panic(err)
 			}
 		}
