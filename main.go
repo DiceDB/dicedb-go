@@ -14,58 +14,21 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	// TODO: We can make this configurable
-	poolSize = 10
-)
+var mu sync.Mutex
 
-var (
-	connectionPools sync.Map
-)
+const maxPoolSize = 10 // Maximum number of connections in the pool
 
 type Client struct {
-	Id        string
-	host      string
-	port      int
+	id        string
 	watchConn net.Conn
 	watchCh   chan *wire.Response
-}
-
-type pool struct {
-	mu             sync.Mutex
-	availableConns chan *pooledConn
-	host           string
-	port           int
-	activeConns    int
-}
-
-type pooledConn struct {
-	conn     net.Conn
-	clientID string // Tracks which client last used this connection
+	host      string
+	port      int
+	poolMu      sync.Mutex
+	connections []net.Conn
 }
 
 type option func(*Client)
-
-func getPoolKey(host string, port int) string {
-	return fmt.Sprintf("%s:%d", host, port)
-}
-
-func getOrCreatePool(host string, port int) *pool {
-	key := getPoolKey(host, port)
-
-	if p, ok := connectionPools.Load(key); ok {
-		return p.(*pool)
-	}
-
-	p := &pool{
-		availableConns: make(chan *pooledConn, poolSize),
-		host:           host,
-		port:           port,
-		activeConns:    0,
-	}
-	actual, _ := connectionPools.LoadOrStore(key, p)
-	return actual.(*pool)
-}
 
 func newConn(host string, port int) (net.Conn, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
@@ -78,170 +41,156 @@ func newConn(host string, port int) (net.Conn, error) {
 
 func WithID(id string) option {
 	return func(c *Client) {
-		c.Id = id
+		c.id = id
 	}
+}
+
+func (c *Client) initializeConnectionPool() {
+	conn, err := newConn(c.host, c.port)
+	if err != nil {
+		fmt.Printf("Error creating initial connection: %v\n", err)
+		return
+	}
+
+	// Perform handshake
+	cmd := &wire.Command{
+		Cmd:  "HANDSHAKE",
+		Args: []string{c.id, "command"},
+	}
+
+	if err := ironhawk.Write(conn, cmd); err != nil {
+		conn.Close()
+		fmt.Printf("Error during handshake: %v\n", err)
+		return
+	}
+
+	resp, err := ironhawk.Read(conn)
+	if err != nil || (resp != nil && resp.Err != "") {
+		conn.Close()
+		if resp != nil && resp.Err != "" {
+			fmt.Printf("Handshake failed: %s\n", resp.Err)
+		} else {
+			fmt.Printf("Error reading handshake response: %v\n", err)
+		}
+		return
+	}
+
+	// Add the connection to the pool
+	c.poolMu.Lock()
+	c.connections = append(c.connections, conn)
+	c.poolMu.Unlock()
 }
 
 func NewClient(host string, port int, opts ...option) (*Client, error) {
 	client := &Client{
-		host: host,
-		port: port,
+		host:        host,
+		port:        port,
+		connections: make([]net.Conn, 0),
 	}
 
-	// Apply options
 	for _, opt := range opts {
 		opt(client)
 	}
 
-	// Generate ID if not provided
-	if client.Id == "" {
-		client.Id = uuid.New().String()
+	if client.id == "" {
+		client.id = uuid.New().String()
 	}
 
-	p := getOrCreatePool(host, port)
-	_, pConn, err := p.leaseConnectionFromPool(host, port, client.Id)
-	defer p.returnToConnectionPool(pConn)
-
-	if err != nil {
-		return nil, err
-	}
+	go client.initializeConnectionPool()
 
 	return client, nil
 }
 
-func (p *pool) leaseConnectionFromPool(host string, port int, clientID string) (net.Conn, *pooledConn, error) {
-	// Try to get a connection from the pool immediately
-	select {
-	case pConn := <-p.availableConns:
-		conn := pConn.conn
+// getConn gets a connection from the pool or creates a new one if needed
+func (c *Client) getConn() (net.Conn, error) {
+	c.poolMu.Lock()
+	defer c.poolMu.Unlock()
 
-		// If this connection was last used by a different client, re-handshake
-		if pConn.clientID != clientID {
-			if resp := fire(&wire.Command{
-				Cmd:  "HANDSHAKE",
-				Args: []string{clientID, "command"},
-			}, conn); resp.Err != "" {
-				// Handshake failed, connection might be broken
-				conn.Close()
-				p.mu.Lock()
-				p.activeConns--
-				p.mu.Unlock()
-				// Try creating a new connection
-				newConn, newPConn, err := p.createNewConnection(host, port, clientID)
-				return newConn, newPConn, err
-			}
-			// Update the client ID for this connection
-			pConn.clientID = clientID
-		}
-
-		return conn, pConn, nil
-	default:
-		// No connection available hence go ahead and acquire lock and create
+	if len(c.connections) > 0 {
+		// Get a connection from the pool
+		conn := c.connections[len(c.connections)-1]
+		c.connections = c.connections[:len(c.connections)-1]
+		return conn, nil
 	}
 
-	// Acquire mutex to check pool state and create a new connection
-	return p.createNewConnection(host, port, clientID)
+	// Create a new connection
+	conn, err := newConn(c.host, c.port)
+	if err != nil {
+		return nil, err
+	}
+
+	// Perform handshake for the new connection
+	cmd := &wire.Command{
+		Cmd:  "HANDSHAKE",
+		Args: []string{c.id, "command"},
+	}
+
+	if err := ironhawk.Write(conn, cmd); err != nil {
+		conn.Close()
+		return nil, err
+	}
+
+	resp, err := ironhawk.Read(conn)
+	if err != nil || (resp != nil && resp.Err != "") {
+		conn.Close()
+		if resp != nil && resp.Err != "" {
+			return nil, fmt.Errorf("could not complete the handshake: %s", resp.Err)
+		}
+		return nil, err
+	}
+
+	return conn, nil
 }
 
-// createNewConnection creates a new connection and associates it with the client
-func (p *pool) createNewConnection(host string, port int, clientID string) (net.Conn, *pooledConn, error) {
-	p.mu.Lock()
+func (c *Client) releaseConn(conn net.Conn) {
+	c.poolMu.Lock()
+	defer c.poolMu.Unlock()
 
-	// Check if we can create a new connection
-	if p.activeConns < poolSize {
-		// Increment the counter before releasing the lock
-		p.activeConns++
-		p.mu.Unlock()
-
-		conn, err := newConn(host, port)
-		if err != nil {
-			// Decrement the counter if connection creation fails
-			p.mu.Lock()
-			p.activeConns--
-			p.mu.Unlock()
-			return nil, nil, err
-		}
-
-		// Do handshake for the new connection
-		if resp := fire(&wire.Command{
-			Cmd:  "HANDSHAKE",
-			Args: []string{clientID, "command"},
-		}, conn); resp.Err != "" {
-			conn.Close()
-			p.mu.Lock()
-			p.activeConns--
-			p.mu.Unlock()
-			return nil, nil, fmt.Errorf("handshake failed: %s", resp.Err)
-		}
-
-		pConn := &pooledConn{
-			conn:     conn,
-			clientID: clientID,
-		}
-
-		return conn, pConn, nil
-	}
-
-	// We've reached max pool size
-	p.mu.Unlock()
-
-	// Wait with timeout for a connection
-	select {
-	case pConn := <-p.availableConns:
-		conn := pConn.conn
-
-		// If this connection was last used by a different client, re-handshake
-		if pConn.clientID != clientID {
-			if resp := fire(&wire.Command{
-				Cmd:  "HANDSHAKE",
-				Args: []string{clientID, "command"},
-			}, conn); resp.Err != "" {
-				// Handshake failed, connection might be broken
-				conn.Close()
-				p.mu.Lock()
-				p.activeConns--
-				p.mu.Unlock()
-				return nil, nil, fmt.Errorf("handshake failed on reused connection: %s", resp.Err)
-			}
-			// Update the client ID
-			pConn.clientID = clientID
-		}
-
-		return conn, pConn, nil
-	// TODO: We can make this configurable
-	case <-time.After(10 * time.Second):
-		return nil, nil, fmt.Errorf("timed out waiting for a connection from the pool")
-	}
-}
-
-func (p *pool) returnToConnectionPool(pConn *pooledConn) {
-	if pConn == nil || pConn.conn == nil {
+	if len(c.connections) >= maxPoolSize {
+		conn.Close()
 		return
 	}
 
-	// Put the connection back in the pool
-	select {
-	case p.availableConns <- pConn:
-		// Successfully returned to pool
-	default:
-		// Pool is full, close the connection
-		pConn.conn.Close()
-
-		// Decrement the active connection counter
-		p.mu.Lock()
-		p.activeConns--
-		p.mu.Unlock()
-	}
+	c.connections = append(c.connections, conn)
 }
 
-func fire(cmd *wire.Command, conn net.Conn) *wire.Response {
-	if err := ironhawk.Write(conn, cmd); err != nil {
+func (c *Client) closeAllPooledConns() {
+	c.poolMu.Lock()
+	defer c.poolMu.Unlock()
+
+	for _, conn := range c.connections {
+		conn.Close()
+	}
+	c.connections = c.connections[:0]
+}
+
+func (c *Client) PoolSize() int {
+	c.poolMu.Lock()
+	defer c.poolMu.Unlock()
+	return len(c.connections)
+}
+
+func (c *Client) fireWithPooledConn(cmd *wire.Command) *wire.Response {
+	conn, err := c.getConn()
+	if err != nil {
 		return &wire.Response{
 			Err: err.Error(),
 		}
 	}
 
-	resp, err := ironhawk.Read(conn)
+	defer c.releaseConn(conn)
+
+	return c.fire(cmd, conn)
+}
+
+func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
+	if err := ironhawk.Write(co, cmd); err != nil {
+		return &wire.Response{
+			Err: err.Error(),
+		}
+	}
+
+	resp, err := ironhawk.Read(co)
 	if err != nil {
 		return &wire.Response{
 			Err: err.Error(),
@@ -252,45 +201,48 @@ func fire(cmd *wire.Command, conn net.Conn) *wire.Response {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
-	// Check if this is a watch-related command
-	isWatchCmd := strings.Contains(cmd.Cmd, ".WATCH")
-
-	// For watch commands, use the dedicated watch connection if available
-	if isWatchCmd && c.watchConn != nil {
-		return fire(cmd, c.watchConn)
-	}
-
-	// For all other commands or if watch connection not established yet
-	p := getOrCreatePool(c.host, c.port)
-	conn, pConn, err := p.leaseConnectionFromPool(c.host, c.port, c.Id)
-	defer p.returnToConnectionPool(pConn)
-
-	if err != nil {
-		return &wire.Response{
-			Err: err.Error(),
+	result := c.fireWithPooledConn(cmd)
+	if result.Err != "" {
+		if c.checkAndReconnect(result.Err) {
+			return c.Fire(cmd)
 		}
 	}
-
-	resp := fire(cmd, conn)
-	// On connection error retry once
-	if resp.Err != "" && c.checkConnectionError(resp.Err) {
-		conn, pConn, err := p.createNewConnection(c.host, c.port, c.Id)
-		defer p.returnToConnectionPool(pConn)
-
-		if err != nil {
-			return &wire.Response{
-				Err: fmt.Sprintf("reconnection failed: %s", err.Error()),
-			}
-		}
-
-		resp = fire(cmd, conn)
-	}
-
-	return resp
+	return result
 }
 
-func (c *Client) checkConnectionError(err string) bool {
-	return err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error())
+func (c *Client) checkAndReconnect(err string) bool {
+	fmt.Println(err)
+	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
+		fmt.Println("Error in connection. Reconnecting...")
+
+		newClient, err := getOrCreateClient(c)
+		if err != nil {
+			fmt.Println("Failed to reconnect:", err)
+			return false
+		}
+
+		*c = *newClient
+		return true
+	}
+	return false
+}
+
+func getOrCreateClient(c *Client) (*Client, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if c == nil {
+		return NewClient(c.host, c.port)
+	}
+
+	newClient, err := NewClient(c.host, c.port,
+		WithID(c.id),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return newClient, nil
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
@@ -310,26 +262,21 @@ func (c *Client) FireString(cmdStr string) *wire.Response {
 }
 
 func (c *Client) WatchCh() (<-chan *wire.Response, error) {
+	var err error
 	if c.watchCh != nil {
 		return c.watchCh, nil
 	}
 
 	c.watchCh = make(chan *wire.Response)
-
-	// Create a dedicated watch connection
-	var err error
 	c.watchConn, err = newConn(c.host, c.port)
 	if err != nil {
 		return nil, err
 	}
 
-	// Do handshake with the same client ID but for "watch" purpose
-	if resp := fire(&wire.Command{
+	if resp := c.fire(&wire.Command{
 		Cmd:  "HANDSHAKE",
-		Args: []string{c.Id, "watch"},
+		Args: []string{c.id, "watch"},
 	}, c.watchConn); resp.Err != "" {
-		c.watchConn.Close()
-		c.watchConn = nil
 		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Err)
 	}
 
@@ -353,42 +300,12 @@ func (c *Client) watch() {
 	}
 }
 
-func (c *Client) checkAndReconnect(err string) bool {
-	fmt.Println(err)
-	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
-		fmt.Println("Error in connection. Reconnecting...")
-
-		// Close the broken connection
-		if c.watchConn != nil {
-			c.watchConn.Close()
-		}
-
-		var err error
-		c.watchConn, err = newConn(c.host, c.port)
-		if err != nil {
-			fmt.Println("Failed to reconnect:", err)
-			return false
-		}
-
-		// Perform handshake
-		if resp := fire(&wire.Command{
-			Cmd:  "HANDSHAKE",
-			Args: []string{c.Id, "watch"},
-		}, c.watchConn); resp.Err != "" {
-			fmt.Println("Failed to complete handshake:", resp.Err)
-			c.watchConn.Close()
-			c.watchConn = nil
-			return false
-		}
-
-		return true
-	}
-	return false
-}
-
 func (c *Client) Close() {
+	// Close the watch connection if it exists
 	if c.watchConn != nil {
 		c.watchConn.Close()
-		c.watchConn = nil
 	}
+
+	// Close all connections in the pool
+	c.closeAllPooledConns()
 }
