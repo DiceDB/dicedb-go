@@ -20,7 +20,7 @@ type Client struct {
 	id        string
 	conn      net.Conn
 	watchConn net.Conn
-	watchCh   chan *wire.Response
+	watchCh   chan *wire.Result
 	host      string
 	port      int
 }
@@ -67,16 +67,16 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
+func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Result {
 	if err := ironhawk.Write(co, cmd); err != nil {
-		return &wire.Response{
+		return &wire.Result{
 			Err: err.Error(),
 		}
 	}
 
 	resp, err := ironhawk.Read(co)
 	if err != nil {
-		return &wire.Response{
+		return &wire.Result{
 			Err: err.Error(),
 		}
 	}
@@ -84,7 +84,7 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 	return resp
 }
 
-func (c *Client) Fire(cmd *wire.Command) *wire.Response {
+func (c *Client) Fire(cmd *wire.Command) *wire.Result {
 	result := c.fire(cmd, c.conn)
 	if result.Err != "" {
 		if c.checkAndReconnect(result.Err) {
@@ -129,7 +129,7 @@ func getOrCreateClient(c *Client) (*Client, error) {
 	return newClient, nil
 }
 
-func (c *Client) FireString(cmdStr string) *wire.Response {
+func (c *Client) FireString(cmdStr string) *wire.Result {
 	cmdStr = strings.TrimSpace(cmdStr)
 	tokens := strings.Split(cmdStr, " ")
 
@@ -145,13 +145,13 @@ func (c *Client) FireString(cmdStr string) *wire.Response {
 	})
 }
 
-func (c *Client) WatchCh() (<-chan *wire.Response, error) {
+func (c *Client) WatchCh() (<-chan *wire.Result, error) {
 	var err error
 	if c.watchCh != nil {
 		return c.watchCh, nil
 	}
 
-	c.watchCh = make(chan *wire.Response)
+	c.watchCh = make(chan *wire.Result)
 	c.watchConn, err = newConn(c.host, c.port)
 	if err != nil {
 		return nil, err

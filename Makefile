@@ -7,7 +7,7 @@ lint:
 	golangci-lint run ./...
 
 generate:
-	protoc --go_out=. --go-grpc_out=. protos/cmd.proto
+	protoc --go_out=. --go-grpc_out=. protos/*.proto
 
 test:
 	go test -v ./...

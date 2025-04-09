@@ -17,7 +17,7 @@ const (
 	idleTimeout    = 30 * time.Minute
 )
 
-func Read(conn net.Conn) (*wire.Response, error) {
+func Read(conn net.Conn) (*wire.Result, error) {
 	var result []byte
 	reader := bufio.NewReaderSize(conn, ioBufferSize)
 	buf := make([]byte, ioBufferSize)
@@ -46,7 +46,7 @@ func Read(conn net.Conn) (*wire.Response, error) {
 		return nil, io.EOF
 	}
 
-	r := &wire.Response{}
+	r := &wire.Result{}
 	if err := proto.Unmarshal(result, r); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal command: %w", err)
 	}
