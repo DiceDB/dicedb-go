@@ -78,7 +78,13 @@ type Result struct {
 	//	*Result_HANDSHAKERes
 	//	*Result_GETRes
 	//	*Result_SETRes
+	//	*Result_DELRes
 	//	*Result_KEYSRes
+	//	*Result_INCRRes
+	//	*Result_DECRRes
+	//	*Result_INCRBYRes
+	//	*Result_DECRBYRes
+	//	*Result_FLUSHDBRes
 	//	*Result_ZRANGERes
 	Response      isResult_Response `protobuf_oneof:"response"`
 	unknownFields protoimpl.UnknownFields
@@ -170,10 +176,64 @@ func (x *Result) GetSETRes() *SETRes {
 	return nil
 }
 
+func (x *Result) GetDELRes() *DELRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_DELRes); ok {
+			return x.DELRes
+		}
+	}
+	return nil
+}
+
 func (x *Result) GetKEYSRes() *KEYSRes {
 	if x != nil {
 		if x, ok := x.Response.(*Result_KEYSRes); ok {
 			return x.KEYSRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetINCRRes() *INCRRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_INCRRes); ok {
+			return x.INCRRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetDECRRes() *DECRRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_DECRRes); ok {
+			return x.DECRRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetINCRBYRes() *INCRBYRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_INCRBYRes); ok {
+			return x.INCRBYRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetDECRBYRes() *DECRBYRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_DECRBYRes); ok {
+			return x.DECRBYRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetFLUSHDBRes() *FLUSHDBRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_FLUSHDBRes); ok {
+			return x.FLUSHDBRes
 		}
 	}
 	return nil
@@ -204,12 +264,36 @@ type Result_SETRes struct {
 	SETRes *SETRes `protobuf:"bytes,12,opt,name=SETRes,proto3,oneof"`
 }
 
+type Result_DELRes struct {
+	DELRes *DELRes `protobuf:"bytes,13,opt,name=DELRes,proto3,oneof"`
+}
+
 type Result_KEYSRes struct {
-	KEYSRes *KEYSRes `protobuf:"bytes,13,opt,name=KEYSRes,proto3,oneof"`
+	KEYSRes *KEYSRes `protobuf:"bytes,14,opt,name=KEYSRes,proto3,oneof"`
+}
+
+type Result_INCRRes struct {
+	INCRRes *INCRRes `protobuf:"bytes,15,opt,name=INCRRes,proto3,oneof"`
+}
+
+type Result_DECRRes struct {
+	DECRRes *DECRRes `protobuf:"bytes,16,opt,name=DECRRes,proto3,oneof"`
+}
+
+type Result_INCRBYRes struct {
+	INCRBYRes *INCRBYRes `protobuf:"bytes,17,opt,name=INCRBYRes,proto3,oneof"`
+}
+
+type Result_DECRBYRes struct {
+	DECRBYRes *DECRBYRes `protobuf:"bytes,18,opt,name=DECRBYRes,proto3,oneof"`
+}
+
+type Result_FLUSHDBRes struct {
+	FLUSHDBRes *FLUSHDBRes `protobuf:"bytes,19,opt,name=FLUSHDBRes,proto3,oneof"`
 }
 
 type Result_ZRANGERes struct {
-	ZRANGERes *ZRANGERes `protobuf:"bytes,21,opt,name=ZRANGERes,proto3,oneof"`
+	ZRANGERes *ZRANGERes `protobuf:"bytes,20,opt,name=ZRANGERes,proto3,oneof"`
 }
 
 func (*Result_HANDSHAKERes) isResult_Response() {}
@@ -218,139 +302,21 @@ func (*Result_GETRes) isResult_Response() {}
 
 func (*Result_SETRes) isResult_Response() {}
 
+func (*Result_DELRes) isResult_Response() {}
+
 func (*Result_KEYSRes) isResult_Response() {}
 
+func (*Result_INCRRes) isResult_Response() {}
+
+func (*Result_DECRRes) isResult_Response() {}
+
+func (*Result_INCRBYRes) isResult_Response() {}
+
+func (*Result_DECRBYRes) isResult_Response() {}
+
+func (*Result_FLUSHDBRes) isResult_Response() {}
+
 func (*Result_ZRANGERes) isResult_Response() {}
-
-type Value struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Value:
-	//
-	//	*Value_Nil
-	//	*Value_Str
-	//	*Value_I64
-	//	*Value_Bytes
-	//	*Value_F64
-	Value         isValue_Value `protobuf_oneof:"value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Value) Reset() {
-	*x = Value{}
-	mi := &file_protos_res_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Value) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Value) ProtoMessage() {}
-
-func (x *Value) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Value.ProtoReflect.Descriptor instead.
-func (*Value) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Value) GetValue() isValue_Value {
-	if x != nil {
-		return x.Value
-	}
-	return nil
-}
-
-func (x *Value) GetNil() bool {
-	if x != nil {
-		if x, ok := x.Value.(*Value_Nil); ok {
-			return x.Nil
-		}
-	}
-	return false
-}
-
-func (x *Value) GetStr() string {
-	if x != nil {
-		if x, ok := x.Value.(*Value_Str); ok {
-			return x.Str
-		}
-	}
-	return ""
-}
-
-func (x *Value) GetI64() int64 {
-	if x != nil {
-		if x, ok := x.Value.(*Value_I64); ok {
-			return x.I64
-		}
-	}
-	return 0
-}
-
-func (x *Value) GetBytes() []byte {
-	if x != nil {
-		if x, ok := x.Value.(*Value_Bytes); ok {
-			return x.Bytes
-		}
-	}
-	return nil
-}
-
-func (x *Value) GetF64() float64 {
-	if x != nil {
-		if x, ok := x.Value.(*Value_F64); ok {
-			return x.F64
-		}
-	}
-	return 0
-}
-
-type isValue_Value interface {
-	isValue_Value()
-}
-
-type Value_Nil struct {
-	Nil bool `protobuf:"varint,1,opt,name=nil,proto3,oneof"`
-}
-
-type Value_Str struct {
-	Str string `protobuf:"bytes,2,opt,name=str,proto3,oneof"`
-}
-
-type Value_I64 struct {
-	I64 int64 `protobuf:"varint,3,opt,name=i64,proto3,oneof"`
-}
-
-type Value_Bytes struct {
-	Bytes []byte `protobuf:"bytes,4,opt,name=bytes,proto3,oneof"`
-}
-
-type Value_F64 struct {
-	F64 float64 `protobuf:"fixed64,5,opt,name=f64,proto3,oneof"`
-}
-
-func (*Value_Nil) isValue_Value() {}
-
-func (*Value_Str) isValue_Value() {}
-
-func (*Value_I64) isValue_Value() {}
-
-func (*Value_Bytes) isValue_Value() {}
-
-func (*Value_F64) isValue_Value() {}
 
 type HANDSHAKERes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -360,7 +326,7 @@ type HANDSHAKERes struct {
 
 func (x *HANDSHAKERes) Reset() {
 	*x = HANDSHAKERes{}
-	mi := &file_protos_res_proto_msgTypes[2]
+	mi := &file_protos_res_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -372,7 +338,7 @@ func (x *HANDSHAKERes) String() string {
 func (*HANDSHAKERes) ProtoMessage() {}
 
 func (x *HANDSHAKERes) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[2]
+	mi := &file_protos_res_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -385,19 +351,19 @@ func (x *HANDSHAKERes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HANDSHAKERes.ProtoReflect.Descriptor instead.
 func (*HANDSHAKERes) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{2}
+	return file_protos_res_proto_rawDescGZIP(), []int{1}
 }
 
 type GETRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         *Value                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GETRes) Reset() {
 	*x = GETRes{}
-	mi := &file_protos_res_proto_msgTypes[3]
+	mi := &file_protos_res_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -409,7 +375,7 @@ func (x *GETRes) String() string {
 func (*GETRes) ProtoMessage() {}
 
 func (x *GETRes) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[3]
+	mi := &file_protos_res_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -422,26 +388,25 @@ func (x *GETRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GETRes.ProtoReflect.Descriptor instead.
 func (*GETRes) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{3}
+	return file_protos_res_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GETRes) GetValue() *Value {
+func (x *GETRes) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
-	return nil
+	return ""
 }
 
 type SETRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SETRes) Reset() {
 	*x = SETRes{}
-	mi := &file_protos_res_proto_msgTypes[4]
+	mi := &file_protos_res_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -453,7 +418,7 @@ func (x *SETRes) String() string {
 func (*SETRes) ProtoMessage() {}
 
 func (x *SETRes) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[4]
+	mi := &file_protos_res_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,14 +431,87 @@ func (x *SETRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SETRes.ProtoReflect.Descriptor instead.
 func (*SETRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{3}
+}
+
+type DELRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Count         int64                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DELRes) Reset() {
+	*x = DELRes{}
+	mi := &file_protos_res_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DELRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DELRes) ProtoMessage() {}
+
+func (x *DELRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DELRes.ProtoReflect.Descriptor instead.
+func (*DELRes) Descriptor() ([]byte, []int) {
 	return file_protos_res_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SETRes) GetOk() bool {
+func (x *DELRes) GetCount() int64 {
 	if x != nil {
-		return x.Ok
+		return x.Count
 	}
-	return false
+	return 0
+}
+
+type FLUSHDBRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FLUSHDBRes) Reset() {
+	*x = FLUSHDBRes{}
+	mi := &file_protos_res_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FLUSHDBRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FLUSHDBRes) ProtoMessage() {}
+
+func (x *FLUSHDBRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FLUSHDBRes.ProtoReflect.Descriptor instead.
+func (*FLUSHDBRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{5}
 }
 
 type KEYSRes struct {
@@ -485,7 +523,7 @@ type KEYSRes struct {
 
 func (x *KEYSRes) Reset() {
 	*x = KEYSRes{}
-	mi := &file_protos_res_proto_msgTypes[5]
+	mi := &file_protos_res_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -497,7 +535,7 @@ func (x *KEYSRes) String() string {
 func (*KEYSRes) ProtoMessage() {}
 
 func (x *KEYSRes) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[5]
+	mi := &file_protos_res_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -510,7 +548,7 @@ func (x *KEYSRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KEYSRes.ProtoReflect.Descriptor instead.
 func (*KEYSRes) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{5}
+	return file_protos_res_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *KEYSRes) GetKeys() []string {
@@ -518,6 +556,182 @@ func (x *KEYSRes) GetKeys() []string {
 		return x.Keys
 	}
 	return nil
+}
+
+type INCRRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *INCRRes) Reset() {
+	*x = INCRRes{}
+	mi := &file_protos_res_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *INCRRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*INCRRes) ProtoMessage() {}
+
+func (x *INCRRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use INCRRes.ProtoReflect.Descriptor instead.
+func (*INCRRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *INCRRes) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type DECRRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DECRRes) Reset() {
+	*x = DECRRes{}
+	mi := &file_protos_res_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DECRRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DECRRes) ProtoMessage() {}
+
+func (x *DECRRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DECRRes.ProtoReflect.Descriptor instead.
+func (*DECRRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DECRRes) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type INCRBYRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *INCRBYRes) Reset() {
+	*x = INCRBYRes{}
+	mi := &file_protos_res_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *INCRBYRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*INCRBYRes) ProtoMessage() {}
+
+func (x *INCRBYRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use INCRBYRes.ProtoReflect.Descriptor instead.
+func (*INCRBYRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *INCRBYRes) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type DECRBYRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DECRBYRes) Reset() {
+	*x = DECRBYRes{}
+	mi := &file_protos_res_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DECRBYRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DECRBYRes) ProtoMessage() {}
+
+func (x *DECRBYRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DECRBYRes.ProtoReflect.Descriptor instead.
+func (*DECRBYRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DECRBYRes) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
 }
 
 type ZElement struct {
@@ -530,7 +744,7 @@ type ZElement struct {
 
 func (x *ZElement) Reset() {
 	*x = ZElement{}
-	mi := &file_protos_res_proto_msgTypes[6]
+	mi := &file_protos_res_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -542,7 +756,7 @@ func (x *ZElement) String() string {
 func (*ZElement) ProtoMessage() {}
 
 func (x *ZElement) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[6]
+	mi := &file_protos_res_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -555,7 +769,7 @@ func (x *ZElement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ZElement.ProtoReflect.Descriptor instead.
 func (*ZElement) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{6}
+	return file_protos_res_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ZElement) GetScore() int64 {
@@ -581,7 +795,7 @@ type ZRANGERes struct {
 
 func (x *ZRANGERes) Reset() {
 	*x = ZRANGERes{}
-	mi := &file_protos_res_proto_msgTypes[7]
+	mi := &file_protos_res_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +807,7 @@ func (x *ZRANGERes) String() string {
 func (*ZRANGERes) ProtoMessage() {}
 
 func (x *ZRANGERes) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_res_proto_msgTypes[7]
+	mi := &file_protos_res_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +820,7 @@ func (x *ZRANGERes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ZRANGERes.ProtoReflect.Descriptor instead.
 func (*ZRANGERes) Descriptor() ([]byte, []int) {
-	return file_protos_res_proto_rawDescGZIP(), []int{7}
+	return file_protos_res_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ZRANGERes) GetElements() []*ZElement {
@@ -622,7 +836,7 @@ var file_protos_res_proto_rawDesc = string([]byte{
 	0x0a, 0x10, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x12, 0x04, 0x77, 0x69, 0x72, 0x65, 0x1a, 0x1c, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
 	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x73, 0x74, 0x72, 0x75, 0x63, 0x74,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe9, 0x02, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xfd, 0x04, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c,
 	0x74, 0x12, 0x24, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0e, 0x32, 0x0c, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52,
 	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61,
@@ -638,39 +852,58 @@ var file_protos_res_proto_rawDesc = string([]byte{
 	0x65, 0x2e, 0x47, 0x45, 0x54, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x06, 0x47, 0x45, 0x54, 0x52,
 	0x65, 0x73, 0x12, 0x26, 0x0a, 0x06, 0x53, 0x45, 0x54, 0x52, 0x65, 0x73, 0x18, 0x0c, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x53, 0x45, 0x54, 0x52, 0x65, 0x73,
-	0x48, 0x00, 0x52, 0x06, 0x53, 0x45, 0x54, 0x52, 0x65, 0x73, 0x12, 0x29, 0x0a, 0x07, 0x4b, 0x45,
-	0x59, 0x53, 0x52, 0x65, 0x73, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x77, 0x69,
-	0x72, 0x65, 0x2e, 0x4b, 0x45, 0x59, 0x53, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x07, 0x4b, 0x45,
-	0x59, 0x53, 0x52, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x09, 0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52,
-	0x65, 0x73, 0x18, 0x15, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e,
-	0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x09, 0x5a, 0x52, 0x41,
-	0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x42, 0x0a, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x78, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x12, 0x0a, 0x03, 0x6e,
-	0x69, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x03, 0x6e, 0x69, 0x6c, 0x12,
-	0x12, 0x0a, 0x03, 0x73, 0x74, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x03,
-	0x73, 0x74, 0x72, 0x12, 0x12, 0x0a, 0x03, 0x69, 0x36, 0x34, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03,
-	0x48, 0x00, 0x52, 0x03, 0x69, 0x36, 0x34, 0x12, 0x16, 0x0a, 0x05, 0x62, 0x79, 0x74, 0x65, 0x73,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x48, 0x00, 0x52, 0x05, 0x62, 0x79, 0x74, 0x65, 0x73, 0x12,
-	0x12, 0x0a, 0x03, 0x66, 0x36, 0x34, 0x18, 0x05, 0x20, 0x01, 0x28, 0x01, 0x48, 0x00, 0x52, 0x03,
-	0x66, 0x36, 0x34, 0x42, 0x07, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x0e, 0x0a, 0x0c,
-	0x48, 0x41, 0x4e, 0x44, 0x53, 0x48, 0x41, 0x4b, 0x45, 0x52, 0x65, 0x73, 0x22, 0x2b, 0x0a, 0x06,
-	0x47, 0x45, 0x54, 0x52, 0x65, 0x73, 0x12, 0x21, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x18, 0x0a, 0x06, 0x53, 0x45, 0x54,
-	0x52, 0x65, 0x73, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x02, 0x6f, 0x6b, 0x22, 0x1d, 0x0a, 0x07, 0x4b, 0x45, 0x59, 0x53, 0x52, 0x65, 0x73, 0x12, 0x12,
-	0x0a, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x65,
-	0x79, 0x73, 0x22, 0x38, 0x0a, 0x08, 0x5a, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x14,
-	0x0a, 0x05, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x73,
-	0x63, 0x6f, 0x72, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x22, 0x37, 0x0a, 0x09,
-	0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x12, 0x2a, 0x0a, 0x08, 0x65, 0x6c, 0x65,
-	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x77, 0x69,
-	0x72, 0x65, 0x2e, 0x5a, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x08, 0x65, 0x6c, 0x65,
-	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2a, 0x19, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
-	0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x45, 0x52, 0x52, 0x10, 0x01,
-	0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2f, 0x77, 0x69, 0x72, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x48, 0x00, 0x52, 0x06, 0x53, 0x45, 0x54, 0x52, 0x65, 0x73, 0x12, 0x26, 0x0a, 0x06, 0x44, 0x45,
+	0x4c, 0x52, 0x65, 0x73, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x77, 0x69, 0x72,
+	0x65, 0x2e, 0x44, 0x45, 0x4c, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x06, 0x44, 0x45, 0x4c, 0x52,
+	0x65, 0x73, 0x12, 0x29, 0x0a, 0x07, 0x4b, 0x45, 0x59, 0x53, 0x52, 0x65, 0x73, 0x18, 0x0e, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x4b, 0x45, 0x59, 0x53, 0x52,
+	0x65, 0x73, 0x48, 0x00, 0x52, 0x07, 0x4b, 0x45, 0x59, 0x53, 0x52, 0x65, 0x73, 0x12, 0x29, 0x0a,
+	0x07, 0x49, 0x4e, 0x43, 0x52, 0x52, 0x65, 0x73, 0x18, 0x0f, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d,
+	0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x49, 0x4e, 0x43, 0x52, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52,
+	0x07, 0x49, 0x4e, 0x43, 0x52, 0x52, 0x65, 0x73, 0x12, 0x29, 0x0a, 0x07, 0x44, 0x45, 0x43, 0x52,
+	0x52, 0x65, 0x73, 0x18, 0x10, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x77, 0x69, 0x72, 0x65,
+	0x2e, 0x44, 0x45, 0x43, 0x52, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x07, 0x44, 0x45, 0x43, 0x52,
+	0x52, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x09, 0x49, 0x4e, 0x43, 0x52, 0x42, 0x59, 0x52, 0x65, 0x73,
+	0x18, 0x11, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x49, 0x4e,
+	0x43, 0x52, 0x42, 0x59, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x09, 0x49, 0x4e, 0x43, 0x52, 0x42,
+	0x59, 0x52, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x09, 0x44, 0x45, 0x43, 0x52, 0x42, 0x59, 0x52, 0x65,
+	0x73, 0x18, 0x12, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x44,
+	0x45, 0x43, 0x52, 0x42, 0x59, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x09, 0x44, 0x45, 0x43, 0x52,
+	0x42, 0x59, 0x52, 0x65, 0x73, 0x12, 0x32, 0x0a, 0x0a, 0x46, 0x4c, 0x55, 0x53, 0x48, 0x44, 0x42,
+	0x52, 0x65, 0x73, 0x18, 0x13, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x77, 0x69, 0x72, 0x65,
+	0x2e, 0x46, 0x4c, 0x55, 0x53, 0x48, 0x44, 0x42, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52, 0x0a, 0x46,
+	0x4c, 0x55, 0x53, 0x48, 0x44, 0x42, 0x52, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x09, 0x5a, 0x52, 0x41,
+	0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x18, 0x14, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x77,
+	0x69, 0x72, 0x65, 0x2e, 0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x48, 0x00, 0x52,
+	0x09, 0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x42, 0x0a, 0x0a, 0x08, 0x72, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x0e, 0x0a, 0x0c, 0x48, 0x41, 0x4e, 0x44, 0x53, 0x48,
+	0x41, 0x4b, 0x45, 0x52, 0x65, 0x73, 0x22, 0x1e, 0x0a, 0x06, 0x47, 0x45, 0x54, 0x52, 0x65, 0x73,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x08, 0x0a, 0x06, 0x53, 0x45, 0x54, 0x52, 0x65, 0x73,
+	0x22, 0x1e, 0x0a, 0x06, 0x44, 0x45, 0x4c, 0x52, 0x65, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x22, 0x0c, 0x0a, 0x0a, 0x46, 0x4c, 0x55, 0x53, 0x48, 0x44, 0x42, 0x52, 0x65, 0x73, 0x22, 0x1d,
+	0x0a, 0x07, 0x4b, 0x45, 0x59, 0x53, 0x52, 0x65, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x6b, 0x65, 0x79,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x65, 0x79, 0x73, 0x22, 0x1f, 0x0a,
+	0x07, 0x49, 0x4e, 0x43, 0x52, 0x52, 0x65, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x1f,
+	0x0a, 0x07, 0x44, 0x45, 0x43, 0x52, 0x52, 0x65, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22,
+	0x21, 0x0a, 0x09, 0x49, 0x4e, 0x43, 0x52, 0x42, 0x59, 0x52, 0x65, 0x73, 0x12, 0x14, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x22, 0x21, 0x0a, 0x09, 0x44, 0x45, 0x43, 0x52, 0x42, 0x59, 0x52, 0x65, 0x73, 0x12,
+	0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x38, 0x0a, 0x08, 0x5a, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e,
+	0x74, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x05, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6d, 0x65, 0x6d, 0x62, 0x65,
+	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x22,
+	0x37, 0x0a, 0x09, 0x5a, 0x52, 0x41, 0x4e, 0x47, 0x45, 0x52, 0x65, 0x73, 0x12, 0x2a, 0x0a, 0x08,
+	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e,
+	0x2e, 0x77, 0x69, 0x72, 0x65, 0x2e, 0x5a, 0x45, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x08,
+	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2a, 0x19, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74,
+	0x75, 0x73, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x45, 0x52,
+	0x52, 0x10, 0x01, 0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2f, 0x77, 0x69, 0x72, 0x65, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 })
 
 var (
@@ -686,34 +919,44 @@ func file_protos_res_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_res_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_protos_res_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_protos_res_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_protos_res_proto_goTypes = []any{
 	(Status)(0),             // 0: wire.Status
 	(*Result)(nil),          // 1: wire.Result
-	(*Value)(nil),           // 2: wire.Value
-	(*HANDSHAKERes)(nil),    // 3: wire.HANDSHAKERes
-	(*GETRes)(nil),          // 4: wire.GETRes
-	(*SETRes)(nil),          // 5: wire.SETRes
-	(*KEYSRes)(nil),         // 6: wire.KEYSRes
-	(*ZElement)(nil),        // 7: wire.ZElement
-	(*ZRANGERes)(nil),       // 8: wire.ZRANGERes
-	(*structpb.Struct)(nil), // 9: google.protobuf.Struct
+	(*HANDSHAKERes)(nil),    // 2: wire.HANDSHAKERes
+	(*GETRes)(nil),          // 3: wire.GETRes
+	(*SETRes)(nil),          // 4: wire.SETRes
+	(*DELRes)(nil),          // 5: wire.DELRes
+	(*FLUSHDBRes)(nil),      // 6: wire.FLUSHDBRes
+	(*KEYSRes)(nil),         // 7: wire.KEYSRes
+	(*INCRRes)(nil),         // 8: wire.INCRRes
+	(*DECRRes)(nil),         // 9: wire.DECRRes
+	(*INCRBYRes)(nil),       // 10: wire.INCRBYRes
+	(*DECRBYRes)(nil),       // 11: wire.DECRBYRes
+	(*ZElement)(nil),        // 12: wire.ZElement
+	(*ZRANGERes)(nil),       // 13: wire.ZRANGERes
+	(*structpb.Struct)(nil), // 14: google.protobuf.Struct
 }
 var file_protos_res_proto_depIdxs = []int32{
-	0, // 0: wire.Result.status:type_name -> wire.Status
-	9, // 1: wire.Result.attrs:type_name -> google.protobuf.Struct
-	3, // 2: wire.Result.HANDSHAKERes:type_name -> wire.HANDSHAKERes
-	4, // 3: wire.Result.GETRes:type_name -> wire.GETRes
-	5, // 4: wire.Result.SETRes:type_name -> wire.SETRes
-	6, // 5: wire.Result.KEYSRes:type_name -> wire.KEYSRes
-	8, // 6: wire.Result.ZRANGERes:type_name -> wire.ZRANGERes
-	2, // 7: wire.GETRes.value:type_name -> wire.Value
-	7, // 8: wire.ZRANGERes.elements:type_name -> wire.ZElement
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	0,  // 0: wire.Result.status:type_name -> wire.Status
+	14, // 1: wire.Result.attrs:type_name -> google.protobuf.Struct
+	2,  // 2: wire.Result.HANDSHAKERes:type_name -> wire.HANDSHAKERes
+	3,  // 3: wire.Result.GETRes:type_name -> wire.GETRes
+	4,  // 4: wire.Result.SETRes:type_name -> wire.SETRes
+	5,  // 5: wire.Result.DELRes:type_name -> wire.DELRes
+	7,  // 6: wire.Result.KEYSRes:type_name -> wire.KEYSRes
+	8,  // 7: wire.Result.INCRRes:type_name -> wire.INCRRes
+	9,  // 8: wire.Result.DECRRes:type_name -> wire.DECRRes
+	10, // 9: wire.Result.INCRBYRes:type_name -> wire.INCRBYRes
+	11, // 10: wire.Result.DECRBYRes:type_name -> wire.DECRBYRes
+	6,  // 11: wire.Result.FLUSHDBRes:type_name -> wire.FLUSHDBRes
+	13, // 12: wire.Result.ZRANGERes:type_name -> wire.ZRANGERes
+	12, // 13: wire.ZRANGERes.elements:type_name -> wire.ZElement
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_protos_res_proto_init() }
@@ -725,15 +968,14 @@ func file_protos_res_proto_init() {
 		(*Result_HANDSHAKERes)(nil),
 		(*Result_GETRes)(nil),
 		(*Result_SETRes)(nil),
+		(*Result_DELRes)(nil),
 		(*Result_KEYSRes)(nil),
+		(*Result_INCRRes)(nil),
+		(*Result_DECRRes)(nil),
+		(*Result_INCRBYRes)(nil),
+		(*Result_DECRBYRes)(nil),
+		(*Result_FLUSHDBRes)(nil),
 		(*Result_ZRANGERes)(nil),
-	}
-	file_protos_res_proto_msgTypes[1].OneofWrappers = []any{
-		(*Value_Nil)(nil),
-		(*Value_Str)(nil),
-		(*Value_I64)(nil),
-		(*Value_Bytes)(nil),
-		(*Value_F64)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -741,7 +983,7 @@ func file_protos_res_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_res_proto_rawDesc), len(file_protos_res_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
