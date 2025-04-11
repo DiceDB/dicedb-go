@@ -60,8 +60,8 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 	if resp := client.Fire(&wire.Command{
 		Cmd:  "HANDSHAKE",
 		Args: []string{client.id, "command"},
-	}); resp.Err != "" {
-		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Err)
+	}); resp.Status == wire.Status_ERR {
+		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Message)
 	}
 
 	return client, nil
@@ -70,14 +70,16 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Result {
 	if err := ironhawk.Write(co, cmd); err != nil {
 		return &wire.Result{
-			Err: err.Error(),
+			Status:  wire.Status_ERR,
+			Message: err.Error(),
 		}
 	}
 
 	resp, err := ironhawk.Read(co)
 	if err != nil {
 		return &wire.Result{
-			Err: err.Error(),
+			Status:  wire.Status_ERR,
+			Message: err.Error(),
 		}
 	}
 
@@ -86,8 +88,8 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Result {
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Result {
 	result := c.fire(cmd, c.conn)
-	if result.Err != "" {
-		if c.checkAndReconnect(result.Err) {
+	if result.Status == wire.Status_ERR {
+		if c.checkAndReconnect(result.Message) {
 			return c.Fire(cmd)
 		}
 	}
@@ -95,7 +97,6 @@ func (c *Client) Fire(cmd *wire.Command) *wire.Result {
 }
 
 func (c *Client) checkAndReconnect(err string) bool {
-	fmt.Println("error connecting:", err)
 	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
 		fmt.Println("reconnecting ...")
 		nc, err := getOrCreateClient(c)
@@ -160,8 +161,8 @@ func (c *Client) WatchCh() (<-chan *wire.Result, error) {
 	if resp := c.fire(&wire.Command{
 		Cmd:  "HANDSHAKE",
 		Args: []string{c.id, "watch"},
-	}, c.watchConn); resp.Err != "" {
-		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Err)
+	}, c.watchConn); resp.Status == wire.Status_ERR {
+		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Message)
 	}
 
 	go c.watch()
