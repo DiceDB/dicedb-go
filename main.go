@@ -2,39 +2,32 @@ package dicedb
 
 import (
 	"fmt"
-	"io"
-	"net"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/dicedb/dicedb-go/ironhawk"
 	"github.com/dicedb/dicedb-go/wire"
 	"github.com/google/uuid"
+)
+
+const (
+	maxResponseSize = 32 * 1024 * 1024 // 32 MB
+	ioBufferSize    = 16 * 1024        // 16 KB
+	idleTimeout     = 30 * time.Minute
 )
 
 var mu sync.Mutex
 
 type Client struct {
-	id        string
-	conn      net.Conn
-	watchConn net.Conn
-	watchCh   chan *wire.Response
-	host      string
-	port      int
+	id             string
+	transport      *ClientWire
+	watchTransport *ClientWire
+	watchCh        chan *wire.Response
+	host           string
+	port           int
 }
 
 type option func(*Client)
-
-func newConn(host string, port int) (net.Conn, error) {
-	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
 
 func WithID(id string) option {
 	return func(c *Client) {
@@ -43,12 +36,12 @@ func WithID(id string) option {
 }
 
 func NewClient(host string, port int, opts ...option) (*Client, error) {
-	conn, err := newConn(host, port)
+	clientWire, err := NewClientWire(maxResponseSize, host, port)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to establish connection with server: %w", err)
 	}
 
-	client := &Client{conn: conn, host: host, port: port}
+	client := &Client{transport: clientWire, host: host, port: port}
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -67,17 +60,17 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
-	if err := ironhawk.Write(co, cmd); err != nil {
+func (c *Client) fire(cmd *wire.Command, transport *ClientWire) *wire.Response {
+	if err := transport.Send(cmd); err != nil {
 		return &wire.Response{
-			Err: err.Error(),
+			Err: fmt.Sprintf("failed to send command: %s", err),
 		}
 	}
 
-	resp, err := ironhawk.Read(co)
+	resp, err := transport.Receive()
 	if err != nil {
 		return &wire.Response{
-			Err: err.Error(),
+			Err: fmt.Sprintf("failed to receive response: %s", err),
 		}
 	}
 
@@ -85,50 +78,10 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Response {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Response {
-	result := c.fire(cmd, c.conn)
-	if result.Err != "" {
-		if c.CheckAndReconnect(result.Err) {
-			return c.Fire(cmd)
-		}
-	}
+	result := c.fire(cmd, c.transport)
+	// TODO implement reconnect
+
 	return result
-}
-
-func (c *Client) CheckAndReconnect(err string) bool {
-	fmt.Println(err)
-	if err == io.EOF.Error() || strings.Contains(err, syscall.EPIPE.Error()) {
-		fmt.Println("Error in connection. Reconnecting...")
-
-		newClient, err := GetOrCreateClient(c)
-		if err != nil {
-			fmt.Println("Failed to reconnect:", err)
-			return false
-		}
-
-		*c = *newClient
-		return true
-	}
-	return false
-}
-
-func GetOrCreateClient(c *Client) (*Client, error) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if c == nil {
-		return NewClient(c.host, c.port)
-	}
-
-	newClient, err := NewClient(c.host, c.port)
-	if err != nil {
-		return nil, err
-	}
-
-	if c.conn != nil {
-		c.conn.Close()
-	}
-
-	return newClient, nil
 }
 
 func (c *Client) FireString(cmdStr string) *wire.Response {
@@ -154,15 +107,15 @@ func (c *Client) WatchCh() (<-chan *wire.Response, error) {
 	}
 
 	c.watchCh = make(chan *wire.Response)
-	c.watchConn, err = newConn(c.host, c.port)
+	c.watchTransport, err = NewClientWire(maxResponseSize, c.host, c.port)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to establish watch connection with server: %w", err)
 	}
 
 	if resp := c.fire(&wire.Command{
 		Cmd:  "HANDSHAKE",
 		Args: []string{c.id, "watch"},
-	}, c.watchConn); resp.Err != "" {
+	}, c.watchTransport); resp.Err != "" {
 		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Err)
 	}
 
@@ -173,19 +126,17 @@ func (c *Client) WatchCh() (<-chan *wire.Response, error) {
 
 func (c *Client) watch() {
 	for {
-		resp, err := ironhawk.Read(c.watchConn)
-		if err != nil {
-			// TODO: handle this better
-			// send the error to the user. maybe through context?
-			if ! c.CheckAndReconnect(err.Error()) {
-				panic(err)
-			}
-		}
+		resp, _ := c.watchTransport.Receive()
+		// TODO reconnect
 
 		c.watchCh <- resp
 	}
 }
 
 func (c *Client) Close() {
-	c.conn.Close()
+	c.transport.Close()
+	if c.watchCh != nil {
+		c.watchTransport.Close()
+		close(c.watchCh)
+	}
 }
