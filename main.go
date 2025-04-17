@@ -68,6 +68,8 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 }
 
 func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Result {
+	//conver the command to uppercase regardless of the input case
+	cmd.Cmd = strings.ToUpper(cmd.Cmd)
 	if err := ironhawk.Write(co, cmd); err != nil {
 		return &wire.Result{
 			Status:  wire.Status_ERR,
@@ -87,6 +89,7 @@ func (c *Client) fire(cmd *wire.Command, co net.Conn) *wire.Result {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Result {
+
 	result := c.fire(cmd, c.conn)
 	if result.Status == wire.Status_ERR {
 		if c.checkAndReconnect(result.Message) {
