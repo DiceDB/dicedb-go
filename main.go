@@ -1,6 +1,7 @@
 package dicedb
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -17,12 +18,13 @@ import (
 var mu sync.Mutex
 
 type Client struct {
-	id        string
-	conn      net.Conn
-	watchConn net.Conn
-	watchCh   chan *wire.Result
-	host      string
-	port      int
+	id          string
+	conn        net.Conn
+	watchConn   net.Conn
+	watchCancel context.CancelFunc
+	watchCh     chan *wire.Result
+	host        string
+	port        int
 }
 
 type option func(*Client)
@@ -165,26 +167,56 @@ func (c *Client) WatchCh() (<-chan *wire.Result, error) {
 		return nil, fmt.Errorf("could not complete the handshake: %s", resp.Message)
 	}
 
-	go c.watch()
+	ctx, watchCancel := context.WithCancel(context.Background())
+	c.watchCancel = watchCancel
+	go c.watch(ctx)
 
 	return c.watchCh, nil
 }
 
-func (c *Client) watch() {
+func (c *Client) watch(ctx context.Context) {
+	defer func() {
+		if c.watchConn != nil {
+			c.watchConn.Close()
+		}
+		if c.watchCh != nil {
+			close(c.watchCh)
+			c.watchCh = nil
+		}
+	}()
 	for {
-		resp, err := ironhawk.Read(c.watchConn)
-		if err != nil {
-			// TODO: handle this better
-			// send the error to the user. maybe through context?
-			if !c.checkAndReconnect(err.Error()) {
-				panic(err)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_ = c.watchConn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			resp, err := ironhawk.Read(c.watchConn)
+			if err != nil {
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					continue
+				}
+				// TODO: handle this better
+				// send the error to the user. maybe through context?
+				if !c.checkAndReconnect(err.Error()) {
+					panic(err)
+				}
+			}
+
+			if c.watchCh != nil {
+				c.watchCh <- resp
 			}
 		}
-
-		c.watchCh <- resp
 	}
 }
 
 func (c *Client) Close() {
 	c.conn.Close()
+	c.WatchConnClose()
+}
+
+func (c *Client) WatchConnClose() {
+	if(c.watchConn != nil) {
+		fmt.Println("closing watch conn...")
+		c.watchCancel()
+	}
 }
