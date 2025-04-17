@@ -189,7 +189,7 @@ func (c *Client) watch(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			_ = c.watchConn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			c.watchConn.SetReadDeadline(time.Now().Add(1 * time.Second))
 			resp, err := ironhawk.Read(c.watchConn)
 			if err != nil {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -216,7 +216,6 @@ func (c *Client) Close() {
 
 func (c *Client) WatchConnClose() {
 	if(c.watchConn != nil) {
-		fmt.Println("closing watch conn...")
 		c.watchCancel()
 	}
 }
