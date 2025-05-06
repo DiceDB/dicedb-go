@@ -185,16 +185,17 @@ func (c *Client) restoreWatchWire() *wire.WireError {
 	return c.restoreWire(c.watchWire)
 }
 
-func (c *Client) restoreWire(dst *ClientWire) *wire.WireError { // nolint:staticcheck
+func (c *Client) restoreWire(dst *ClientWire) *wire.WireError {
 	slog.Warn("trying to restore connection with server...")
-	var err *wire.WireError
+	dst.Close()
 
-	dst, err = NewClientWire(maxResponseSize, c.host, c.port) // nolint:ineffassign,staticcheck
+	newWire, err := NewClientWire(maxResponseSize, c.host, c.port)
 	if err != nil {
 		slog.Warn("failed to restore connection with server", "error", err)
 		return err
 	}
 
+	*dst = *newWire
 	slog.Info("connection restored successfully")
 	return nil
 }
