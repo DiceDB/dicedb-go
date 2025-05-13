@@ -2,6 +2,7 @@ package dicedb
 
 import (
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/dicedb/dicedb-go/wire"
@@ -40,7 +41,7 @@ func TestNewClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewClient(tt.host, tt.port)
+			client, err := NewClient(tt.host, tt.port, &sync.WaitGroup{})
 			if (client == nil) != tt.wantNil {
 				t.Errorf("NewClient() got = %v, %s, want nil = %v, err = %v", client, err, tt.wantNil, tt.err)
 			}
@@ -52,7 +53,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_Fire(t *testing.T) {
-	client, err := NewClient("localhost", 7379)
+	client, err := NewClient("localhost", 7379, &sync.WaitGroup{})
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
