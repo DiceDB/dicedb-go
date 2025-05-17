@@ -5,16 +5,18 @@ package internal
 
 import (
 	"bufio"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/dicedb/dicedb-go/wire"
 	"io"
 	"log/slog"
 	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dicedb/dicedb-go/wire"
 )
 
 const prefixSize = 4 // bytes
@@ -33,14 +35,19 @@ type TCPWire struct {
 	reader     *bufio.Reader
 	writeMu    sync.Mutex
 	conn       net.Conn
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 func NewTCPWire(maxMsgSize int, conn net.Conn) *TCPWire {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &TCPWire{
 		status:     Open,
 		maxMsgSize: maxMsgSize,
 		conn:       conn,
 		reader:     bufio.NewReader(conn),
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 }
 
@@ -48,7 +55,7 @@ func (w *TCPWire) Send(msg []byte) *wire.WireError {
 	w.writeMu.Lock()
 	defer w.writeMu.Unlock()
 
-	if w.status == Closed {
+	if w.IsClosed() {
 		return &wire.WireError{Kind: wire.Terminated, Cause: errors.New("trying to use closed wire")}
 	}
 
@@ -68,6 +75,11 @@ func (w *TCPWire) Receive() ([]byte, *wire.WireError) {
 	size, err := w.readPrefix()
 	if err != nil {
 		return nil, err
+	}
+
+	if w.IsClosed() {
+		// If the wire is closed, we return an empty buffer to indicate that the read was interrupted
+		return make([]byte, 0), nil
 	}
 
 	if size <= 0 {
@@ -95,16 +107,36 @@ func (w *TCPWire) Receive() ([]byte, *wire.WireError) {
 }
 
 func (w *TCPWire) Close() {
-	if w.status == Closed {
+	if w.IsClosed() {
 		return
 	}
 
+	// Cancel the context to stop the read goroutine
+	w.cancel()
 	w.status = Closed
 	err := w.conn.Close()
 	if err != nil {
 		slog.Warn("error closing network connection", "error", err)
-
 		return
+	}
+}
+
+func (w *TCPWire) ReadWithInterruption(buffer []byte, ctx context.Context) (int, error) {
+	done := make(chan struct{})
+	var n int
+	var readErr error
+
+	go func() {
+		n, readErr = io.ReadFull(w.reader, buffer)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return n, readErr
+	case <-ctx.Done():
+		<-done
+		return 0, nil
 	}
 }
 
@@ -115,7 +147,7 @@ func (w *TCPWire) readPrefix() (uint32, *wire.WireError) {
 
 	var lastErr error
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		_, err := io.ReadFull(w.reader, buffer)
+		_, err := w.ReadWithInterruption(buffer, w.ctx)
 		if err == nil {
 			return binary.BigEndian.Uint32(buffer), nil
 		}
@@ -166,7 +198,7 @@ func (w *TCPWire) readMessage(size uint32) ([]byte, *wire.WireError) {
 
 	var lastErr error
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		_, err := io.ReadFull(w.reader, buffer)
+		_, err := w.ReadWithInterruption(buffer, w.ctx)
 		if err == nil {
 			return buffer, nil
 		}
@@ -273,4 +305,8 @@ func (w *TCPWire) write(buffer []byte) *wire.WireError {
 
 func prefix(msgSize int, buffer []byte) {
 	binary.BigEndian.PutUint32(buffer[:prefixSize], uint32(msgSize))
+}
+
+func (w *TCPWire) IsClosed() bool {
+	return w.status == Closed
 }
