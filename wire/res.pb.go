@@ -2759,7 +2759,6 @@ type GEOElement struct {
 	Coordinates   *GEOCoordinates        `protobuf:"bytes,2,opt,name=coordinates,proto3" json:"coordinates,omitempty"`
 	Distance      float64                `protobuf:"fixed64,3,opt,name=distance,proto3" json:"distance,omitempty"`
 	Hash          uint64                 `protobuf:"varint,4,opt,name=hash,proto3" json:"hash,omitempty"`
-	Rank          int64                  `protobuf:"varint,5,opt,name=rank,proto3" json:"rank,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2818,13 +2817,6 @@ func (x *GEOElement) GetDistance() float64 {
 func (x *GEOElement) GetHash() uint64 {
 	if x != nil {
 		return x.Hash
-	}
-	return 0
-}
-
-func (x *GEOElement) GetRank() int64 {
-	if x != nil {
-		return x.Rank
 	}
 	return 0
 }
@@ -3029,14 +3021,13 @@ const file_protos_res_proto_rawDesc = "" +
 	"\bdistance\x18\x01 \x01(\x01R\bdistance\"J\n" +
 	"\x0eGEOCoordinates\x12\x1c\n" +
 	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
-	"\blatitude\x18\x02 \x01(\x01R\blatitude\"\xa0\x01\n" +
+	"\blatitude\x18\x02 \x01(\x01R\blatitude\"\x8c\x01\n" +
 	"\n" +
 	"GEOElement\x12\x16\n" +
 	"\x06member\x18\x01 \x01(\tR\x06member\x126\n" +
 	"\vcoordinates\x18\x02 \x01(\v2\x14.wire.GEOCoordinatesR\vcoordinates\x12\x1a\n" +
 	"\bdistance\x18\x03 \x01(\x01R\bdistance\x12\x12\n" +
-	"\x04hash\x18\x04 \x01(\x04R\x04hash\x12\x12\n" +
-	"\x04rank\x18\x05 \x01(\x03R\x04rank\"<\n" +
+	"\x04hash\x18\x04 \x01(\x04R\x04hash\"<\n" +
 	"\fGEOSEARCHRes\x12,\n" +
 	"\belements\x18\x01 \x03(\v2\x10.wire.GEOElementR\belements*\x19\n" +
 	"\x06Status\x12\x06\n" +
