@@ -8,6 +8,7 @@ lint:
 
 generate:
 	protoc --go_out=. --go-grpc_out=. protos/*.proto
+	protoc --go_out=. --go-grpc_out=. protos/wal/*.proto
 
 test:
 	go test ./...
