@@ -139,7 +139,7 @@ func (c *Client) WatchCh() (<-chan *wire.Result, error) {
 	c.watchRetrier = NewRetrier(5, 5*time.Second)
 	c.watchWire, err = NewClientWire(maxResponseSize, c.host, c.port)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to establish watch connection with server: %w", err)
+		return nil, fmt.Errorf("failed to establish watch connection with server: %w", err)
 	}
 
 	if resp := c.fire(&wire.Command{
@@ -165,6 +165,11 @@ func (c *Client) watch() {
 			break
 		}
 
+		// if the watch connection is closed, break the loop
+		if c.watchWire.IsClosed() {
+			break
+		}
+
 		c.watchCh <- resp
 	}
 }
@@ -172,8 +177,16 @@ func (c *Client) watch() {
 func (c *Client) Close() {
 	c.mainWire.Close()
 	if c.watchCh != nil {
+		c.CloseWatch()
+	}
+}
+
+func (c *Client) CloseWatch() {
+	if c.watchCh != nil {
 		c.watchWire.Close()
 		close(c.watchCh)
+		// set the watch channel to nil, for next watch to start a new connection
+		c.watchCh = nil
 	}
 }
 

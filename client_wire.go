@@ -17,7 +17,8 @@ type ClientWire struct {
 }
 
 func NewClientWire(maxMsgSize int, host string, port int) (*ClientWire, *wire.WireError) {
-	addr := fmt.Sprintf("%s:%d", host, port)
+	// Use net.JoinHostPort to properly handle both IPv4 and IPv6 addresses
+	addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return nil, &wire.WireError{Kind: wire.NotEstablished, Cause: err}
@@ -42,4 +43,8 @@ func (cw *ClientWire) Receive() (*wire.Result, *wire.WireError) {
 
 func (cw *ClientWire) Close() {
 	cw.ProtobufTCPWire.Close()
+}
+
+func (cw *ClientWire) IsClosed() bool {
+	return cw.ProtobufTCPWire.IsClosed()
 }

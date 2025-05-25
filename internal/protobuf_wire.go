@@ -4,8 +4,9 @@
 package internal
 
 import (
-	"github.com/dicedb/dicedb-go/wire"
 	"net"
+
+	"github.com/dicedb/dicedb-go/wire"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -47,4 +48,8 @@ func (w *ProtobufTCPWire) Receive(dst proto.Message) *wire.WireError {
 
 func (w *ProtobufTCPWire) Close() {
 	w.tcpWire.Close()
+}
+
+func (w *ProtobufTCPWire) IsClosed() bool {
+	return w.tcpWire.IsClosed()
 }
