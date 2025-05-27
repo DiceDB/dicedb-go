@@ -117,6 +117,8 @@ type Result struct {
 	//	*Result_GEOADDRes
 	//	*Result_GEODISTRes
 	//	*Result_GEOSEARCHRes
+	//	*Result_GEOHASHRes
+	//	*Result_GEOPOSRes
 	Response      isResult_Response `protobuf_oneof:"response"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -567,6 +569,24 @@ func (x *Result) GetGEOSEARCHRes() *GEOSEARCHRes {
 	return nil
 }
 
+func (x *Result) GetGEOHASHRes() *GEOHASHRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_GEOHASHRes); ok {
+			return x.GEOHASHRes
+		}
+	}
+	return nil
+}
+
+func (x *Result) GetGEOPOSRes() *GEOPOSRes {
+	if x != nil {
+		if x, ok := x.Response.(*Result_GEOPOSRes); ok {
+			return x.GEOPOSRes
+		}
+	}
+	return nil
+}
+
 type isResult_Response interface {
 	isResult_Response()
 }
@@ -743,6 +763,14 @@ type Result_GEOSEARCHRes struct {
 	GEOSEARCHRes *GEOSEARCHRes `protobuf:"bytes,53,opt,name=GEOSEARCHRes,proto3,oneof"`
 }
 
+type Result_GEOHASHRes struct {
+	GEOHASHRes *GEOHASHRes `protobuf:"bytes,54,opt,name=GEOHASHRes,proto3,oneof"`
+}
+
+type Result_GEOPOSRes struct {
+	GEOPOSRes *GEOPOSRes `protobuf:"bytes,55,opt,name=GEOPOSRes,proto3,oneof"`
+}
+
 func (*Result_TYPERes) isResult_Response() {}
 
 func (*Result_PINGRes) isResult_Response() {}
@@ -828,6 +856,10 @@ func (*Result_GEOADDRes) isResult_Response() {}
 func (*Result_GEODISTRes) isResult_Response() {}
 
 func (*Result_GEOSEARCHRes) isResult_Response() {}
+
+func (*Result_GEOHASHRes) isResult_Response() {}
+
+func (*Result_GEOPOSRes) isResult_Response() {}
 
 type ZRANKWATCHRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2865,11 +2897,99 @@ func (x *GEOSEARCHRes) GetElements() []*GEOElement {
 	return nil
 }
 
+type GEOHASHRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Hashes        []string               `protobuf:"bytes,1,rep,name=hashes,proto3" json:"hashes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GEOHASHRes) Reset() {
+	*x = GEOHASHRes{}
+	mi := &file_protos_res_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GEOHASHRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GEOHASHRes) ProtoMessage() {}
+
+func (x *GEOHASHRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GEOHASHRes.ProtoReflect.Descriptor instead.
+func (*GEOHASHRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *GEOHASHRes) GetHashes() []string {
+	if x != nil {
+		return x.Hashes
+	}
+	return nil
+}
+
+type GEOPOSRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Coordinates   []*GEOCoordinates      `protobuf:"bytes,1,rep,name=coordinates,proto3" json:"coordinates,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GEOPOSRes) Reset() {
+	*x = GEOPOSRes{}
+	mi := &file_protos_res_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GEOPOSRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GEOPOSRes) ProtoMessage() {}
+
+func (x *GEOPOSRes) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_res_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GEOPOSRes.ProtoReflect.Descriptor instead.
+func (*GEOPOSRes) Descriptor() ([]byte, []int) {
+	return file_protos_res_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *GEOPOSRes) GetCoordinates() []*GEOCoordinates {
+	if x != nil {
+		return x.Coordinates
+	}
+	return nil
+}
+
 var File_protos_res_proto protoreflect.FileDescriptor
 
 const file_protos_res_proto_rawDesc = "" +
 	"\n" +
-	"\x10protos/res.proto\x12\x04wire\"\xd9\x11\n" +
+	"\x10protos/res.proto\x12\x04wire\"\xbe\x12\n" +
 	"\x06Result\x12$\n" +
 	"\x06status\x18\x01 \x01(\x0e2\f.wire.StatusR\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12$\n" +
@@ -2928,7 +3048,11 @@ const file_protos_res_proto_rawDesc = "" +
 	"\n" +
 	"GEODISTRes\x184 \x01(\v2\x10.wire.GEODISTResH\x00R\n" +
 	"GEODISTRes\x128\n" +
-	"\fGEOSEARCHRes\x185 \x01(\v2\x12.wire.GEOSEARCHResH\x00R\fGEOSEARCHResB\n" +
+	"\fGEOSEARCHRes\x185 \x01(\v2\x12.wire.GEOSEARCHResH\x00R\fGEOSEARCHRes\x122\n" +
+	"\n" +
+	"GEOHASHRes\x186 \x01(\v2\x10.wire.GEOHASHResH\x00R\n" +
+	"GEOHASHRes\x12/\n" +
+	"\tGEOPOSRes\x187 \x01(\v2\x0f.wire.GEOPOSResH\x00R\tGEOPOSResB\n" +
 	"\n" +
 	"\bresponse\"\x0f\n" +
 	"\rZRANKWATCHRes\"\x0e\n" +
@@ -3029,7 +3153,12 @@ const file_protos_res_proto_rawDesc = "" +
 	"\bdistance\x18\x03 \x01(\x01R\bdistance\x12\x12\n" +
 	"\x04hash\x18\x04 \x01(\x04R\x04hash\"<\n" +
 	"\fGEOSEARCHRes\x12,\n" +
-	"\belements\x18\x01 \x03(\v2\x10.wire.GEOElementR\belements*\x19\n" +
+	"\belements\x18\x01 \x03(\v2\x10.wire.GEOElementR\belements\"$\n" +
+	"\n" +
+	"GEOHASHRes\x12\x16\n" +
+	"\x06hashes\x18\x01 \x03(\tR\x06hashes\"C\n" +
+	"\tGEOPOSRes\x126\n" +
+	"\vcoordinates\x18\x01 \x03(\v2\x14.wire.GEOCoordinatesR\vcoordinates*\x19\n" +
 	"\x06Status\x12\x06\n" +
 	"\x02OK\x10\x00\x12\a\n" +
 	"\x03ERR\x10\x01B\bZ\x06./wireb\x06proto3"
@@ -3047,7 +3176,7 @@ func file_protos_res_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_res_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_protos_res_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
+var file_protos_res_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
 var file_protos_res_proto_goTypes = []any{
 	(Status)(0),             // 0: wire.Status
 	(*Result)(nil),          // 1: wire.Result
@@ -3098,6 +3227,8 @@ var file_protos_res_proto_goTypes = []any{
 	(*GEOCoordinates)(nil),  // 46: wire.GEOCoordinates
 	(*GEOElement)(nil),      // 47: wire.GEOElement
 	(*GEOSEARCHRes)(nil),    // 48: wire.GEOSEARCHRes
+	(*GEOHASHRes)(nil),      // 49: wire.GEOHASHRes
+	(*GEOPOSRes)(nil),       // 50: wire.GEOPOSRes
 }
 var file_protos_res_proto_depIdxs = []int32{
 	0,  // 0: wire.Result.status:type_name -> wire.Status
@@ -3144,18 +3275,21 @@ var file_protos_res_proto_depIdxs = []int32{
 	44, // 41: wire.Result.GEOADDRes:type_name -> wire.GEOADDRes
 	45, // 42: wire.Result.GEODISTRes:type_name -> wire.GEODISTRes
 	48, // 43: wire.Result.GEOSEARCHRes:type_name -> wire.GEOSEARCHRes
-	13, // 44: wire.HGETALLRes.elements:type_name -> wire.HElement
-	34, // 45: wire.ZRANGERes.elements:type_name -> wire.ZElement
-	34, // 46: wire.ZPOPMAXRes.elements:type_name -> wire.ZElement
-	34, // 47: wire.ZPOPMINRes.elements:type_name -> wire.ZElement
-	34, // 48: wire.ZRANKRes.element:type_name -> wire.ZElement
-	46, // 49: wire.GEOElement.coordinates:type_name -> wire.GEOCoordinates
-	47, // 50: wire.GEOSEARCHRes.elements:type_name -> wire.GEOElement
-	51, // [51:51] is the sub-list for method output_type
-	51, // [51:51] is the sub-list for method input_type
-	51, // [51:51] is the sub-list for extension type_name
-	51, // [51:51] is the sub-list for extension extendee
-	0,  // [0:51] is the sub-list for field type_name
+	49, // 44: wire.Result.GEOHASHRes:type_name -> wire.GEOHASHRes
+	50, // 45: wire.Result.GEOPOSRes:type_name -> wire.GEOPOSRes
+	13, // 46: wire.HGETALLRes.elements:type_name -> wire.HElement
+	34, // 47: wire.ZRANGERes.elements:type_name -> wire.ZElement
+	34, // 48: wire.ZPOPMAXRes.elements:type_name -> wire.ZElement
+	34, // 49: wire.ZPOPMINRes.elements:type_name -> wire.ZElement
+	34, // 50: wire.ZRANKRes.element:type_name -> wire.ZElement
+	46, // 51: wire.GEOElement.coordinates:type_name -> wire.GEOCoordinates
+	47, // 52: wire.GEOSEARCHRes.elements:type_name -> wire.GEOElement
+	46, // 53: wire.GEOPOSRes.coordinates:type_name -> wire.GEOCoordinates
+	54, // [54:54] is the sub-list for method output_type
+	54, // [54:54] is the sub-list for method input_type
+	54, // [54:54] is the sub-list for extension type_name
+	54, // [54:54] is the sub-list for extension extendee
+	0,  // [0:54] is the sub-list for field type_name
 }
 
 func init() { file_protos_res_proto_init() }
@@ -3207,6 +3341,8 @@ func file_protos_res_proto_init() {
 		(*Result_GEOADDRes)(nil),
 		(*Result_GEODISTRes)(nil),
 		(*Result_GEOSEARCHRes)(nil),
+		(*Result_GEOHASHRes)(nil),
+		(*Result_GEOPOSRes)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3214,7 +3350,7 @@ func file_protos_res_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_res_proto_rawDesc), len(file_protos_res_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   48,
+			NumMessages:   50,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
