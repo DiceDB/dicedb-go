@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dgraph-io/ristretto"
+	"github.com/dgryski/go-farm"
 	"github.com/dicedb/dicedb-go/wire"
 	"github.com/google/uuid"
 )
@@ -22,7 +24,9 @@ type Client struct {
 	watchWire    *ClientWire
 	watchCh      chan *wire.Result
 	host         string
+	lcache       *ristretto.Cache
 	port         int
+	wg           *sync.WaitGroup
 }
 
 type option func(*Client)
@@ -33,7 +37,7 @@ func WithID(id string) option {
 	}
 }
 
-func NewClient(host string, port int, opts ...option) (*Client, error) {
+func NewClient(host string, port int, wg *sync.WaitGroup, opts ...option) (*Client, error) {
 	mainRetrier := NewRetrier(3, 5*time.Second)
 	clientWire, err := ExecuteWithResult(mainRetrier, []wire.ErrKind{wire.NotEstablished}, func() (*ClientWire, *wire.WireError) {
 		return NewClientWire(maxResponseSize, host, port)
@@ -47,11 +51,22 @@ func NewClient(host string, port int, opts ...option) (*Client, error) {
 		return nil, fmt.Errorf("unexpected error when establishing server connection, report this to dicedb maintainers: %w", err)
 	}
 
+	lru_cache, cacheErr := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e6,     // number of keys to track frequency of (1M).
+		MaxCost:     1 << 30, // maximum cost of cache (1GB).
+		BufferItems: 64,      // number of keys per Get buffer.
+	})
+	if cacheErr != nil {
+		return nil, fmt.Errorf("failed to create local cache: %w", cacheErr)
+	}
+
 	client := &Client{
 		mainRetrier: mainRetrier,
 		mainWire:    clientWire,
 		host:        host,
 		port:        port,
+		wg:          wg,
+		lcache:      lru_cache,
 	}
 
 	for _, opt := range opts {
@@ -110,6 +125,42 @@ func (c *Client) fire(cmd *wire.Command, clientWire *ClientWire) *wire.Result {
 }
 
 func (c *Client) Fire(cmd *wire.Command) *wire.Result {
+	if cmd.Cmd == "GET" && len(cmd.Args) > 0 {
+		key := cmd.Args[0]
+
+		watch_cmd := &wire.Command{
+			Cmd:  "GET.WATCH",
+			Args: []string{key},
+		}
+
+		fp := Fingerprint(watch_cmd)
+
+		// check if fingerprint key is in cache
+		if cachedValue, found := c.lcache.Get(fp); found {
+			if cachedResult, ok := cachedValue.(*wire.Result); ok {
+				return cachedResult
+			}
+		}
+
+		// if it is not, fire the the normal get command
+		resp := c.fire(cmd, c.mainWire)
+
+		// if the get command was successful, store the value in cache
+		// and subscribe to the key
+		if resp.Status == wire.Status_OK {
+			c.lcache.Set(fp, resp, 1)
+			c.lcache.Wait()
+
+			c.wg.Add(1)
+			go func() {
+				defer c.wg.Done()
+				Subscribe(c, cmd.Args[0])
+			}()
+		}
+		return resp
+	}
+
+	// For non-GET commands, just send to the server
 	return c.fire(cmd, c.mainWire)
 }
 
@@ -201,4 +252,45 @@ func (c *Client) restoreWire(dst *ClientWire) *wire.WireError { // nolint:static
 
 func noop() *wire.WireError {
 	return nil
+}
+
+func Subscribe(client *Client, watch_key string) {
+	resp := client.Fire(&wire.Command{
+		Cmd:  "GET.WATCH",
+		Args: []string{watch_key},
+	})
+	if resp.Status == wire.Status_ERR {
+		fmt.Errorf("error subscribing:", resp.Message)
+	}
+}
+
+func ListenForMessages(client *Client, onMessage func(message string)) {
+	ch, err := client.WatchCh()
+	if err != nil {
+		panic(err)
+	}
+	for resp := range ch {
+		// take fingerprint of the resp and check if it is in cache
+		// if it is in cache then update the Response part of the cache entry
+		fp := resp.GetFingerprint64()
+		if cachedValue, found := client.lcache.Get(fp); found {
+			if cachedResult, ok := cachedValue.(*wire.Result); ok {
+				cachedResult.Response = resp.Response
+				client.lcache.Set(fp, cachedResult, 1)
+			}
+		}
+		if resp.Status == wire.Status_ERR {
+			fmt.Errorf("error listening for messages:", resp.Message)
+		} else {
+			onMessage(resp.GetMessage())
+		}
+	}
+}
+
+func Fingerprint(c *wire.Command) uint64 {
+	cmdStr := c.Cmd
+	if len(c.Args) > 0 {
+		cmdStr = fmt.Sprintf("%s %s", c.Cmd, strings.Join(c.Args, " "))
+	}
+	return farm.Fingerprint64([]byte(cmdStr))
 }
